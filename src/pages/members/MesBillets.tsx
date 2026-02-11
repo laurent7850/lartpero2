@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { membersApi } from '@/lib/api';
+import { membersApi, Ticket } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -8,19 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, Calendar, MapPin, Ticket as TicketIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
-interface Ticket {
-  id: string;
-  token: string;
-  status: string;
-  usedAt?: string;
-  event: {
-    id: string;
-    title: string;
-    dateStart: string;
-    location?: string;
-  };
-}
 
 export default function MesBillets() {
   const { user } = useAuth();
@@ -38,7 +25,7 @@ export default function MesBillets() {
     try {
       setLoading(true);
       const data = await membersApi.getTickets();
-      setTickets(data as Ticket[] || []);
+      setTickets(data || []);
     } catch (error: any) {
       console.error('Error loading tickets:', error);
       setError('Impossible de charger vos billets.');
@@ -47,22 +34,16 @@ export default function MesBillets() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'VALID':
-        return <Badge className="bg-green-500">Valide</Badge>;
-      case 'USED':
-        return <Badge variant="secondary">Utilisé</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="destructive">Annulé</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const getStatusBadge = (isUsed: boolean) => {
+    if (isUsed) {
+      return <Badge variant="secondary">Utilisé</Badge>;
     }
+    return <Badge className="bg-green-500">Valide</Badge>;
   };
 
-  const generateQRCodeUrl = (token: string) => {
+  const generateQRCodeUrl = (ticketCode: string) => {
     return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-      `${window.location.origin}/checkin?token=${token}`
+      `${window.location.origin}/checkin?code=${ticketCode}`
     )}`;
   };
 
@@ -119,10 +100,10 @@ export default function MesBillets() {
                   <div>
                     <CardTitle className="text-2xl mb-2">{ticket.event.title}</CardTitle>
                     <CardDescription>
-                      Billet #{ticket.id.slice(0, 8)}
+                      Billet #{ticket.ticketCode}
                     </CardDescription>
                   </div>
-                  {getStatusBadge(ticket.status)}
+                  {getStatusBadge(ticket.isUsed)}
                 </div>
               </CardHeader>
               <CardContent>
@@ -151,24 +132,13 @@ export default function MesBillets() {
                         </div>
                       </div>
                     )}
-
-                    {ticket.status === 'USED' && ticket.usedAt && (
-                      <div className="pt-4 border-t">
-                        <p className="text-sm text-muted-foreground">Utilisé le</p>
-                        <p className="font-medium">
-                          {format(new Date(ticket.usedAt), "d MMMM yyyy 'à' HH:mm", {
-                            locale: fr,
-                          })}
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex flex-col items-center justify-center bg-muted rounded-lg p-6">
-                    {ticket.status === 'VALID' ? (
+                    {!ticket.isUsed ? (
                       <>
                         <img
-                          src={generateQRCodeUrl(ticket.token)}
+                          src={generateQRCodeUrl(ticket.ticketCode)}
                           alt="QR Code"
                           className="w-48 h-48 mb-4"
                         />
@@ -180,9 +150,7 @@ export default function MesBillets() {
                       <div className="text-center">
                         <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                         <p className="text-sm text-muted-foreground">
-                          {ticket.status === 'USED'
-                            ? 'Ce billet a déjà été utilisé'
-                            : 'Ce billet a été annulé'}
+                          Ce billet a déjà été utilisé
                         </p>
                       </div>
                     )}

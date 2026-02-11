@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export function MembresLayout() {
   const location = useLocation();
-  const { profile } = useAuth();
+  const { user } = useAuth();
 
   const navigation = [
     { name: 'Profil', href: '/membres/profil' },
@@ -19,7 +19,7 @@ export function MembresLayout() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-light mb-2">
-            Bonjour, {profile?.first_name || 'Membre'}
+            Bonjour, {user?.firstName || 'Membre'}
           </h1>
           <p className="text-black/60">Bienvenue dans votre espace personnel</p>
         </div>

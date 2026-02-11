@@ -5,7 +5,7 @@ import { Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 
 export function Header() {
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -49,7 +49,7 @@ export function Header() {
           <div className="hidden lg:flex items-center space-x-4">
             {user ? (
               <>
-                {profile?.role === 'admin' && (
+                {isAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -115,7 +115,7 @@ export function Header() {
             <div className="pt-4 border-t border-black/10 space-y-4">
               {user ? (
                 <>
-                  {profile?.role === 'admin' && (
+                  {isAdmin && (
                     <Button
                       variant="ghost"
                       size="sm"
