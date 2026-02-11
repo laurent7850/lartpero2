@@ -1,8 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.58.0';
 import Stripe from 'npm:stripe@14.10.0';
 
+// CORS configurable via variable d'environnement (mettre votre domaine en production)
+const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || '*';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };

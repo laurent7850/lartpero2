@@ -31,6 +31,8 @@ import MesBillets from './pages/members/MesBillets';
 import ReserverEvenement from './pages/ReserverEvenement';
 import Paiement from './pages/Paiement';
 import TestPaiement from './pages/TestPaiement';
+import { Boutique } from './pages/Boutique';
+import { PaiementProduit } from './pages/PaiementProduit';
 
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -58,6 +60,8 @@ function App() {
           <Route path="/evenements/:slug/reserver" element={<Layout><ReserverEvenement /></Layout>} />
           <Route path="/paiement/:orderId" element={<Layout><Paiement /></Layout>} />
           <Route path="/test-paiement" element={<Layout><TestPaiement /></Layout>} />
+          <Route path="/boutique" element={<Layout><Boutique /></Layout>} />
+          <Route path="/paiement-produit/:orderId" element={<Layout><PaiementProduit /></Layout>} />
           <Route path="/devenir-membre" element={<Layout><DevenirMembre /></Layout>} />
           <Route path="/connexion" element={<Layout><Connexion /></Layout>} />
           <Route path="/mentions-legales" element={<Layout><MentionsLegales /></Layout>} />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,12 @@ export function DevenirMembre() {
     resolver: zodResolver(signupSchema),
   });
 
+  useEffect(() => {
+    if (user) {
+      navigate('/membres');
+    }
+  }, [user, navigate]);
+
   const onSubmit = async (data: SignupForm) => {
     setError('');
     setLoading(true);
@@ -65,7 +71,6 @@ export function DevenirMembre() {
   };
 
   if (user) {
-    navigate('/membres');
     return null;
   }
 
@@ -154,102 +159,91 @@ export function DevenirMembre() {
             </div>
 
             <div className="mt-12 space-y-8">
-              <div className="overflow-x-auto">
+              <div>
                 <h3 className="text-2xl font-light mb-6 text-gray-900 tracking-wide">Formules Abonnements</h3>
-                <table className="w-full border-collapse border border-gray-300 shadow-sm">
+                <table className="w-full border-collapse border border-gray-300 shadow-sm text-sm">
                   <thead>
                     <tr className="bg-gradient-to-br from-gray-100 to-gray-200">
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Formules Abonnements</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Durée</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Description</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Prix</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Avantages/Conditions</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[15%]">Formule</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[10%]">Durée</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[12%]">Prix</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900">Avantages</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm">
+                  <tbody>
                     <tr className="bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Standard</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">1 mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">2 events par mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">85€/mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Un verre offert à chaque event + accès aux animations</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Standard</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">1 mois</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">85€/mois</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">2 events/mois, 1 verre offert, accès animations</td>
                     </tr>
                     <tr className="bg-white hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Premium</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">3 mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">2 events par mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">240€/mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Un verre offert à chaque event + un guest gratuit par trimestre + accès aux animations</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Premium</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">3 mois</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">240€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">2 events/mois, 1 verre offert, 1 guest/trimestre, animations</td>
                     </tr>
                     <tr className="bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Elite</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">6 mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">2 events par mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">456€/mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Un verre offert à chaque event + un guest gratuit par trimestre + accès aux animations</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Elite</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">6 mois</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">456€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">2 events/mois, 1 verre offert, 1 guest/trimestre, animations</td>
                     </tr>
                     <tr className="bg-white hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Prestige</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">1 an</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">2 events par mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">888€/mois</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Un verre offert à chaque event + un guest gratuit par trimestre + accès aux animations</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Prestige</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">1 an</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">888€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">2 events/mois, 1 verre offert, 1 guest/trimestre, animations</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              <div className="overflow-x-auto">
+              <div>
                 <h3 className="text-2xl font-light mb-6 text-gray-900 tracking-wide">Formules Sans Abonnement</h3>
-                <table className="w-full border-collapse border border-gray-300 shadow-sm">
+                <table className="w-full border-collapse border border-gray-300 shadow-sm text-sm">
                   <thead>
                     <tr className="bg-gradient-to-br from-gray-100 to-gray-200">
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Formules Sans Abonnement</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Description</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Prix</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Avantages/Conditions</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[25%]">Formule</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[12%]">Prix</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900">Avantages</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm">
+                  <tbody>
                     <tr className="bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Entrée Découverte</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">Entrée valable pour 1 event</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">49€</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Pour les non-abonnés, 1 verre offert à cet event + accès à l'animation</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Entrée Découverte</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">49€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">1 event, 1 verre offert, accès animation</td>
                     </tr>
                     <tr className="bg-white hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Entrée Guest d'un Membre</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">Entrée valable pour 1 event</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">39€</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Pour invitées d'un membre de L'Art'Péro, 1 verre offert à cet event + accès à l'animation</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Entrée Guest</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">39€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">Invité d'un membre, 1 verre offert, accès animation</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              <div className="overflow-x-auto">
+              <div>
                 <h3 className="text-2xl font-light mb-6 text-gray-900 tracking-wide">Bon Cadeau</h3>
-                <table className="w-full border-collapse border border-gray-300 shadow-sm">
+                <table className="w-full border-collapse border border-gray-300 shadow-sm text-sm">
                   <thead>
                     <tr className="bg-gradient-to-br from-gray-100 to-gray-200">
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Bon Cadeau</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Description</th>
-                      <th className="border border-gray-300 p-4 text-left font-semibold text-sm uppercase tracking-wider text-gray-900">Prix</th>
-                      <th className="border border-gray-300 p-4 text-left font-medium text-sm uppercase tracking-wider text-gray-900">Avantages/Conditions</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[25%]">Formule</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900 w-[12%]">Prix</th>
+                      <th className="border border-gray-300 p-2 text-left font-medium text-xs uppercase text-gray-900">Avantages</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm">
+                  <tbody>
                     <tr className="bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Art'Péro Gift</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">1 event</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">55€</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Valable 6 mois, 1 verre offert pour cet event + accès à l'animation</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Art'Péro Gift</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">55€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">1 event, valable 6 mois, 1 verre offert, animation</td>
                     </tr>
                     <tr className="bg-white hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 p-4 font-semibold text-gray-900">Art'Péro Expérience</td>
-                      <td className="border border-gray-300 p-4 text-gray-700">2 events</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 font-medium">95€</td>
-                      <td className="border border-gray-300 p-4 text-gray-700 leading-relaxed">Valable 6 mois, 1 verre offert pour cet event + accès à l'animation</td>
+                      <td className="border border-gray-300 p-2 font-semibold text-gray-900">Art'Péro Expérience</td>
+                      <td className="border border-gray-300 p-2 text-gray-700 font-medium">95€</td>
+                      <td className="border border-gray-300 p-2 text-gray-700">2 events, valable 6 mois, 1 verre offert, animation</td>
                     </tr>
                   </tbody>
                 </table>

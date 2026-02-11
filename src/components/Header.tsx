@@ -18,6 +18,7 @@ export function Header() {
   const publicLinks = [
     { to: '/notre-histoire', label: 'Notre Histoire' },
     { to: '/evenements', label: 'Événements' },
+    { to: '/boutique', label: 'Boutique' },
     { to: '/contact', label: 'Contact' },
   ];
 

@@ -124,3 +124,39 @@ export type Ticket = {
   used_at: string | null;
   created_at: string;
 };
+
+export type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  category: 'subscription' | 'entry' | 'gift_card';
+  price_cents: number;
+  duration_months: number | null;
+  events_included: number | null;
+  is_active: boolean;
+  stripe_price_id: string | null;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProductOrder = {
+  id: string;
+  product_id: string | null;
+  user_id: string;
+  quantity: number;
+  total_amount: number;
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  stripe_session_id: string | null;
+  stripe_payment_intent: string | null;
+  recipient_email: string | null;
+  recipient_name: string | null;
+  gift_code: string | null;
+  gift_code_used: boolean;
+  expires_at: string | null;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+  products?: Product;
+};

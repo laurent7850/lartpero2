@@ -1,8 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.58.0';
 import Stripe from 'npm:stripe@14.10.0';
 
+// CORS configurable via variable d'environnement (mettre votre domaine en production)
+const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || '*';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature',
 };
@@ -20,6 +23,16 @@ Deno.serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')!;
     const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    const isProduction = Deno.env.get('ENVIRONMENT') === 'production';
+
+    if (!stripeSecretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+
+    // En production, exiger la vérification du webhook
+    if (isProduction && !stripeWebhookSecret) {
+      throw new Error('STRIPE_WEBHOOK_SECRET is required in production');
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const stripe = new Stripe(stripeSecretKey, {
@@ -32,7 +45,18 @@ Deno.serve(async (req: Request) => {
 
     let event: Stripe.Event;
 
-    if (stripeWebhookSecret && signature) {
+    // En production, toujours vérifier la signature
+    if (stripeWebhookSecret) {
+      if (!signature) {
+        console.error('Missing stripe-signature header');
+        return new Response(
+          JSON.stringify({ error: 'Missing stripe-signature header' }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
       try {
         event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret);
       } catch (err: any) {
@@ -46,6 +70,8 @@ Deno.serve(async (req: Request) => {
         );
       }
     } else {
+      // Mode développement uniquement - sans vérification de signature
+      console.warn('WARNING: Running without webhook signature verification (dev mode only)');
       event = JSON.parse(body);
     }
 
