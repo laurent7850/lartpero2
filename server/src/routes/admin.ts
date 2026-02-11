@@ -410,11 +410,11 @@ router.delete('/products/:id', async (req, res) => {
 // Messages list
 router.get('/messages', async (req, res) => {
   try {
-    const messages = await prisma.contactMessage.findMany({
+    const messages = await prisma.message.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(messages.map(m => ({
+    res.json(messages.map((m: { id: string; name: string; email: string; phone: string | null; subject: string | null; body: string; createdAt: Date }) => ({
       id: m.id,
       name: m.name,
       email: m.email,
