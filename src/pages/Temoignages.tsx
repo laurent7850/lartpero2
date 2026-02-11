@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, Testimonial } from '@/lib/supabase';
+import { messagesApi, Testimonial } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 
 export function Temoignages() {
@@ -12,13 +12,7 @@ export function Temoignages() {
 
   const loadTestimonials = async () => {
     try {
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('*')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await messagesApi.getTestimonials();
       setTestimonials(data || []);
     } catch (error) {
       console.error('Error loading testimonials:', error);
@@ -65,7 +59,7 @@ export function Temoignages() {
                   <p className="text-lg text-black/80 leading-relaxed mb-6 italic">
                     "{testimonial.content}"
                   </p>
-                  <p className="text-sm font-medium">— {testimonial.author_name}</p>
+                  <p className="text-sm font-medium">— {testimonial.authorName}</p>
                 </CardContent>
               </Card>
             ))}

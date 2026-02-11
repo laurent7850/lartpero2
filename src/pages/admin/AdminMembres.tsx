@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { adminApi, AdminMember } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -15,28 +15,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-interface Profile {
-  id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  role: string;
-  created_at: string;
-}
-
-interface Membership {
-  status: string;
-  plan: string | null;
-  current_period_end: string | null;
-}
-
-interface MemberWithMembership extends Profile {
-  membership: Membership | null;
-}
-
 export function AdminMembres() {
-  const [members, setMembers] = useState<MemberWithMembership[]>([]);
+  const [members, setMembers] = useState<AdminMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -46,29 +26,8 @@ export function AdminMembres() {
 
   const loadMembers = async () => {
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profilesError) throw profilesError;
-
-      const membersWithMemberships = await Promise.all(
-        (profilesData || []).map(async (profile) => {
-          const { data: membershipData } = await supabase
-            .from('memberships')
-            .select('status, plan, current_period_end')
-            .eq('user_id', profile.id)
-            .maybeSingle();
-
-          return {
-            ...profile,
-            membership: membershipData,
-          };
-        })
-      );
-
-      setMembers(membersWithMemberships);
+      const data = await adminApi.getMembers();
+      setMembers(data || []);
     } catch (error) {
       console.error('Error loading members:', error);
     } finally {
@@ -80,22 +39,22 @@ export function AdminMembres() {
     const searchLower = searchTerm.toLowerCase();
     return (
       member.email.toLowerCase().includes(searchLower) ||
-      member.first_name?.toLowerCase().includes(searchLower) ||
-      member.last_name?.toLowerCase().includes(searchLower)
+      member.firstName?.toLowerCase().includes(searchLower) ||
+      member.lastName?.toLowerCase().includes(searchLower)
     );
   });
 
-  const getMembershipStatusBadge = (status: string | null) => {
-    if (!status || status === 'none') {
+  const getMembershipStatusBadge = (status: string | undefined) => {
+    if (!status || status === 'NONE') {
       return <Badge variant="outline">Aucun</Badge>;
     }
-    if (status === 'active') {
+    if (status === 'ACTIVE') {
       return <Badge className="bg-green-600">Actif</Badge>;
     }
-    if (status === 'canceled') {
+    if (status === 'CANCELED') {
       return <Badge variant="outline" className="border-orange-600 text-orange-600">Annulé</Badge>;
     }
-    if (status === 'past_due') {
+    if (status === 'PAST_DUE') {
       return <Badge variant="outline" className="border-red-600 text-red-600">Impayé</Badge>;
     }
     return <Badge variant="outline">{status}</Badge>;
@@ -151,11 +110,11 @@ export function AdminMembres() {
                   <TableCell>
                     <div>
                       <div className="font-medium">
-                        {member.first_name && member.last_name
-                          ? `${member.first_name} ${member.last_name}`
+                        {member.firstName && member.lastName
+                          ? `${member.firstName} ${member.lastName}`
                           : 'Nom non renseigné'}
                       </div>
-                      {member.role === 'admin' && (
+                      {member.role === 'ADMIN' && (
                         <Badge variant="outline" className="mt-1 text-xs">
                           Admin
                         </Badge>
@@ -178,15 +137,15 @@ export function AdminMembres() {
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      {getMembershipStatusBadge(member.membership?.status || null)}
+                      {getMembershipStatusBadge(member.membership?.status)}
                       {member.membership?.plan && (
                         <div className="text-xs text-black/60 mt-1">
                           {member.membership.plan}
                         </div>
                       )}
-                      {member.membership?.current_period_end && member.membership.status === 'active' && (
+                      {member.membership?.currentPeriodEnd && member.membership.status === 'ACTIVE' && (
                         <div className="text-xs text-black/60">
-                          Expire le {format(new Date(member.membership.current_period_end), 'PP', { locale: fr })}
+                          Expire le {format(new Date(member.membership.currentPeriodEnd), 'PP', { locale: fr })}
                         </div>
                       )}
                     </div>
@@ -194,7 +153,7 @@ export function AdminMembres() {
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm text-black/60">
                       <Calendar className="w-4 h-4 text-black/40" />
-                      {format(new Date(member.created_at), 'PP', { locale: fr })}
+                      {format(new Date(member.createdAt), 'PP', { locale: fr })}
                     </div>
                   </TableCell>
                 </TableRow>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ const profileSchema = z.object({
 type ProfileForm = z.infer<typeof profileSchema>;
 
 export function Profil() {
-  const { profile, user, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -32,21 +32,21 @@ export function Profil() {
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: profile?.first_name || '',
-      lastName: profile?.last_name || '',
-      phone: profile?.phone || '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: user?.phone || '',
     },
   });
 
   useEffect(() => {
-    if (profile) {
+    if (user) {
       reset({
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
-        phone: profile.phone || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
       });
     }
-  }, [profile, reset]);
+  }, [user, reset]);
 
   const onSubmit = async (data: ProfileForm) => {
     if (!user?.id) {
@@ -59,19 +59,11 @@ export function Profil() {
     setLoading(true);
 
     try {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone: data.phone,
-        })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw updateError;
-      }
+      await authApi.updateProfile({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+      });
 
       await refreshProfile();
       setSuccess(true);
@@ -111,7 +103,7 @@ export function Profil() {
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
-                value={profile?.email || ''}
+                value={user?.email || ''}
                 disabled
                 className="border-black/20 bg-black/5"
               />
@@ -175,14 +167,14 @@ export function Profil() {
             <div className="flex justify-between py-2 border-b border-black/10">
               <span className="text-black/60">Rôle</span>
               <span className="font-medium">
-                {profile?.role === 'admin' ? 'Administrateur' : 'Membre'}
+                {user?.role === 'ADMIN' ? 'Administrateur' : 'Membre'}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-black/10">
               <span className="text-black/60">Membre depuis</span>
               <span className="font-medium">
-                {profile?.created_at
-                  ? new Date(profile.created_at).toLocaleDateString('fr-FR')
+                {user?.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString('fr-FR')
                   : '-'}
               </span>
             </div>

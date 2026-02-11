@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, EventRegistration, Event } from '@/lib/supabase';
+import { membersApi, EventRegistration } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-type EventWithDetails = EventRegistration & {
-  event: Event;
-};
-
 export function MesEvenements() {
   const { user } = useAuth();
-  const [registrations, setRegistrations] = useState<EventWithDetails[]>([]);
+  const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,14 +21,8 @@ export function MesEvenements() {
 
   const loadRegistrations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('event_registrations')
-        .select('*, event:events(*)')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setRegistrations((data as any) || []);
+      const data = await membersApi.getRegistrations();
+      setRegistrations(data || []);
     } catch (error) {
       console.error('Error loading registrations:', error);
     } finally {
@@ -77,21 +67,21 @@ export function MesEvenements() {
                   </CardTitle>
                   <Badge
                     variant={
-                      registration.status === 'paid'
+                      registration.status === 'PAID'
                         ? 'default'
-                        : registration.status === 'pending'
+                        : registration.status === 'PENDING'
                         ? 'outline'
                         : 'destructive'
                     }
                     className={
-                      registration.status === 'paid'
+                      registration.status === 'PAID'
                         ? 'bg-black border-black'
                         : ''
                     }
                   >
-                    {registration.status === 'paid'
+                    {registration.status === 'PAID'
                       ? 'Confirmé'
-                      : registration.status === 'pending'
+                      : registration.status === 'PENDING'
                       ? 'En attente'
                       : 'Annulé'}
                   </Badge>
@@ -102,7 +92,7 @@ export function MesEvenements() {
                   <Calendar className="w-4 h-4" />
                   <span>
                     {format(
-                      new Date(registration.event.date_start),
+                      new Date(registration.event.dateStart),
                       'PPP',
                       { locale: fr }
                     )}
@@ -122,7 +112,7 @@ export function MesEvenements() {
                   <div className="flex justify-between text-sm mt-2">
                     <span className="text-black/60">Total payé</span>
                     <span className="font-medium">
-                      {(registration.total_cents / 100).toFixed(2)} €
+                      {(registration.totalCents / 100).toFixed(2)} €
                     </span>
                   </div>
                 </div>

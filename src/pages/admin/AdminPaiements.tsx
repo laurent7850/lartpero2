@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { adminApi, AdminPayment } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,23 +22,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface Payment {
-  id: string;
-  user_id: string;
-  kind: string;
-  amount_cents: number;
-  currency: string;
-  status: string;
-  created_at: string;
-  profiles: {
-    email: string;
-    first_name: string | null;
-    last_name: string | null;
-  };
-}
-
 export function AdminPaiements() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<AdminPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'subscription' | 'event'>('all');
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -49,22 +34,10 @@ export function AdminPaiements() {
 
   const loadPayments = async () => {
     try {
-      let query = supabase
-        .from('payments')
-        .select('*, profiles(email, first_name, last_name)')
-        .order('created_at', { ascending: false });
-
-      if (filter !== 'all') {
-        query = query.eq('kind', filter);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
+      const data = await adminApi.getPayments(filter);
       setPayments(data || []);
 
-      const total = (data || []).reduce((sum, payment) => sum + payment.amount_cents, 0);
+      const total = (data || []).reduce((sum, payment) => sum + payment.amountCents, 0);
       setTotalRevenue(total);
     } catch (error) {
       console.error('Error loading payments:', error);
@@ -74,23 +47,23 @@ export function AdminPaiements() {
   };
 
   const getStatusBadge = (status: string) => {
-    if (status === 'succeeded' || status === 'paid') {
+    if (status === 'succeeded' || status === 'paid' || status === 'PAID') {
       return <Badge className="bg-green-600">Payé</Badge>;
     }
-    if (status === 'pending') {
+    if (status === 'pending' || status === 'PENDING') {
       return <Badge variant="outline" className="border-orange-600 text-orange-600">En attente</Badge>;
     }
-    if (status === 'failed' || status === 'canceled') {
+    if (status === 'failed' || status === 'canceled' || status === 'FAILED') {
       return <Badge variant="outline" className="border-red-600 text-red-600">Échoué</Badge>;
     }
     return <Badge variant="outline">{status}</Badge>;
   };
 
   const getKindBadge = (kind: string) => {
-    if (kind === 'subscription') {
+    if (kind === 'subscription' || kind === 'SUBSCRIPTION') {
       return <Badge variant="outline">Abonnement</Badge>;
     }
-    if (kind === 'event') {
+    if (kind === 'event' || kind === 'EVENT') {
       return <Badge variant="outline">Événement</Badge>;
     }
     return <Badge variant="outline">{kind}</Badge>;
@@ -99,13 +72,13 @@ export function AdminPaiements() {
   const exportToCSV = () => {
     const headers = ['Date', 'Client', 'Email', 'Type', 'Montant', 'Devise', 'Statut'];
     const csvData = payments.map(payment => [
-      format(new Date(payment.created_at), 'dd/MM/yyyy HH:mm', { locale: fr }),
-      payment.profiles.first_name && payment.profiles.last_name
-        ? `${payment.profiles.first_name} ${payment.profiles.last_name}`
+      format(new Date(payment.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr }),
+      payment.user.firstName && payment.user.lastName
+        ? `${payment.user.firstName} ${payment.user.lastName}`
         : 'N/A',
-      payment.profiles.email,
-      payment.kind === 'subscription' ? 'Abonnement' : payment.kind === 'event' ? 'Événement' : payment.kind,
-      (payment.amount_cents / 100).toFixed(2),
+      payment.user.email,
+      payment.kind === 'subscription' || payment.kind === 'SUBSCRIPTION' ? 'Abonnement' : payment.kind === 'event' || payment.kind === 'EVENT' ? 'Événement' : payment.kind,
+      (payment.amountCents / 100).toFixed(2),
       payment.currency.toUpperCase(),
       payment.status
     ]);
@@ -207,17 +180,17 @@ export function AdminPaiements() {
               payments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell className="text-sm text-black/60">
-                    {format(new Date(payment.created_at), 'PP à HH:mm', { locale: fr })}
+                    {format(new Date(payment.createdAt), 'PP à HH:mm', { locale: fr })}
                   </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">
-                        {payment.profiles.first_name && payment.profiles.last_name
-                          ? `${payment.profiles.first_name} ${payment.profiles.last_name}`
-                          : payment.profiles.email}
+                        {payment.user.firstName && payment.user.lastName
+                          ? `${payment.user.firstName} ${payment.user.lastName}`
+                          : payment.user.email}
                       </div>
-                      {payment.profiles.first_name && payment.profiles.last_name && (
-                        <div className="text-sm text-black/60">{payment.profiles.email}</div>
+                      {payment.user.firstName && payment.user.lastName && (
+                        <div className="text-sm text-black/60">{payment.user.email}</div>
                       )}
                     </div>
                   </TableCell>
@@ -225,7 +198,7 @@ export function AdminPaiements() {
                     {getKindBadge(payment.kind)}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {(payment.amount_cents / 100).toFixed(2)} {payment.currency.toUpperCase()}
+                    {(payment.amountCents / 100).toFixed(2)} {payment.currency.toUpperCase()}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(payment.status)}

@@ -1,11 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase, Profile } from '@/lib/supabase';
+import { authApi, setAuthToken, getAuthToken, User, Membership } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
-  profile: Profile | null;
-  session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, firstName: string, lastName: string, phone: string) => Promise<{ error: any }>;
@@ -13,65 +10,41 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   isAdmin: boolean;
   isMember: boolean;
+  membership: Membership | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await loadProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
-      })();
-    });
-
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, []);
 
-  const loadProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoading(false);
+  const checkAuth = async () => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        const userData = await authApi.getMe();
+        setUser(userData);
+      } catch {
+        setAuthToken(null);
+        setUser(null);
+      }
     }
+    setLoading(false);
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const { user: userData } = await authApi.login(email, password);
+      setUser(userData);
+      return { error: null };
+    } catch (error: any) {
+      return { error: { message: error.message } };
+    }
   };
 
   const signUp = async (
@@ -81,45 +54,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastName: string,
     phone: string
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (!error && data.user) {
-      await supabase
-        .from('profiles')
-        .update({
-          first_name: firstName,
-          last_name: lastName,
-          phone: phone,
-        })
-        .eq('id', data.user.id);
-
-      await loadProfile(data.user.id);
+    try {
+      const { user: userData } = await authApi.register({
+        email,
+        password,
+        firstName,
+        lastName,
+      });
+      // Update phone if provided
+      if (phone) {
+        await authApi.updateProfile({ phone });
+      }
+      setUser(userData);
+      return { error: null };
+    } catch (error: any) {
+      return { error: { message: error.message } };
     }
-
-    return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    await authApi.logout();
+    setUser(null);
   };
 
   const refreshProfile = async () => {
-    if (user?.id) {
-      await loadProfile(user.id);
+    try {
+      const userData = await authApi.getMe();
+      setUser(userData);
+    } catch {
+      // Ignore error
     }
   };
 
-  const isAdmin = profile?.role === 'admin';
-  const isMember = !!profile;
+  const isAdmin = user?.role === 'ADMIN';
+  const isMember = !!user;
+  const membership = user?.membership || null;
 
   const value = {
     user,
-    profile,
-    session,
     loading,
     signIn,
     signUp,
@@ -127,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile,
     isAdmin,
     isMember,
+    membership,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

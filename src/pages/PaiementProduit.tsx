@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, ProductOrder } from '@/lib/supabase';
+import { productsApi, ProductOrder } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle, Loader2, Gift, Crown, Ticket, Copy } from 'lucide-react';
@@ -11,7 +11,7 @@ export function PaiementProduit() {
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [order, setOrder] = useState<ProductOrder | null>(null);
@@ -29,7 +29,7 @@ export function PaiementProduit() {
   }, [orderId]);
 
   useEffect(() => {
-    if (isSuccess && order && order.payment_status === 'pending') {
+    if (isSuccess && order && order.paymentStatus === 'PENDING') {
       verifyPayment();
     } else if (isCanceled) {
       setPaymentStatus('canceled');
@@ -38,13 +38,8 @@ export function PaiementProduit() {
 
   const loadOrder = async () => {
     try {
-      const { data, error } = await supabase
-        .from('product_orders')
-        .select('*, products(*)')
-        .eq('id', orderId)
-        .maybeSingle();
-
-      if (error) throw error;
+      const orders = await productsApi.getOrders();
+      const data = orders.find(o => o.id === orderId);
 
       if (!data) {
         toast({
@@ -57,7 +52,7 @@ export function PaiementProduit() {
       }
 
       setOrder(data);
-      if (data.payment_status === 'paid') {
+      if (data.paymentStatus === 'PAID') {
         setPaymentStatus('success');
       }
     } catch (error) {
@@ -73,27 +68,15 @@ export function PaiementProduit() {
   };
 
   const verifyPayment = async () => {
-    if (!session) return;
+    if (!user || !orderId) return;
 
     setVerifying(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-product-payment`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ orderId }),
-        }
-      );
+      const result = await productsApi.verifyPayment(orderId);
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success && result.order) {
         setPaymentStatus('success');
-        setOrder(data.order);
+        setOrder(result.order);
         toast({
           title: 'Paiement confirmé',
           description: 'Votre achat a été validé avec succès',
@@ -122,8 +105,8 @@ export function PaiementProduit() {
   };
 
   const copyGiftCode = () => {
-    if (order?.gift_code) {
-      navigator.clipboard.writeText(order.gift_code);
+    if (order?.giftCode) {
+      navigator.clipboard.writeText(order.giftCode);
       toast({
         title: 'Code copié',
         description: 'Le code cadeau a été copié dans le presse-papiers',
@@ -133,11 +116,11 @@ export function PaiementProduit() {
 
   const getCategoryIcon = (category?: string) => {
     switch (category) {
-      case 'subscription':
+      case 'SUBSCRIPTION':
         return <Crown className="w-8 h-8 text-amber-600" />;
-      case 'entry':
+      case 'ENTRY':
         return <Ticket className="w-8 h-8 text-blue-600" />;
-      case 'gift_card':
+      case 'GIFT_CARD':
         return <Gift className="w-8 h-8 text-pink-600" />;
       default:
         return null;
@@ -164,7 +147,7 @@ export function PaiementProduit() {
     );
   }
 
-  const product = order.products;
+  const product = order.product;
 
   return (
     <div className="py-16 px-4">
@@ -216,41 +199,41 @@ export function PaiementProduit() {
               </div>
               <div className="flex justify-between items-center mt-4 pt-4 border-t">
                 <span className="text-gray-600">Total</span>
-                <span className="text-xl font-bold">{formatPrice(order.total_amount)}</span>
+                <span className="text-xl font-bold">{formatPrice(order.totalAmount)}</span>
               </div>
             </div>
 
             {/* Gift Card Code */}
-            {paymentStatus === 'success' && order.gift_code && (
+            {paymentStatus === 'success' && order.giftCode && (
               <div className="bg-pink-50 rounded-lg p-4 border border-pink-200">
                 <p className="text-sm font-medium text-pink-800 mb-2">Code cadeau</p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 bg-white px-3 py-2 rounded border text-lg font-mono">
-                    {order.gift_code}
+                    {order.giftCode}
                   </code>
                   <Button variant="outline" size="icon" onClick={copyGiftCode}>
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
-                {order.recipient_name && (
+                {order.recipientName && (
                   <p className="text-sm text-pink-700 mt-2">
-                    Pour : {order.recipient_name}
+                    Pour : {order.recipientName}
                   </p>
                 )}
-                {order.expires_at && (
+                {order.expiresAt && (
                   <p className="text-xs text-pink-600 mt-1">
-                    Valable jusqu'au {new Date(order.expires_at).toLocaleDateString('fr-FR')}
+                    Valable jusqu'au {new Date(order.expiresAt).toLocaleDateString('fr-FR')}
                   </p>
                 )}
               </div>
             )}
 
             {/* Subscription Info */}
-            {paymentStatus === 'success' && product?.category === 'subscription' && (
+            {paymentStatus === 'success' && product?.category === 'SUBSCRIPTION' && (
               <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                 <p className="text-sm font-medium text-amber-800 mb-2">Votre abonnement est actif !</p>
                 <p className="text-sm text-amber-700">
-                  Vous avez maintenant accès à {product.events_included} events sur {product.duration_months} mois.
+                  Vous avez maintenant accès à {product.eventsIncluded} events sur {product.durationMonths} mois.
                 </p>
               </div>
             )}

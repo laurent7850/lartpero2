@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Order, Event, supabase } from '@/lib/supabase';
+import { Order, Event, ordersApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +11,7 @@ export default function Paiement() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [event, setEvent] = useState<Event | null>(null);
+  const [order, setOrder] = useState<(Order & { event: Event }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,29 +48,10 @@ export default function Paiement() {
     try {
       setLoading(true);
 
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Session expirée. Veuillez vous reconnecter.');
-      }
-
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId }),
-      });
-
-      const result = await response.json();
+      const result = await ordersApi.verifyPayment(orderId);
 
       if (result.success && result.paymentStatus === 'paid') {
         await loadOrder();
-      } else if (result.error) {
-        throw new Error(result.error);
       } else {
         await loadOrder();
       }
@@ -88,42 +68,23 @@ export default function Paiement() {
     try {
       setLoading(true);
 
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .maybeSingle();
+      const orderData = await ordersApi.get(orderId);
 
-      if (orderError) throw orderError;
       if (!orderData) {
         setError('Commande introuvable.');
         return;
       }
 
-      if (orderData.user_id !== user?.id) {
-        setError("Vous n'êtes pas autorisé à accéder à cette commande.");
-        return;
-      }
-
       setOrder(orderData);
 
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', orderData.event_id)
-        .maybeSingle();
-
-      if (eventError) throw eventError;
-      setEvent(eventData);
-
-      if (orderData.payment_status === 'paid') {
+      if (orderData.paymentStatus === 'PAID') {
         setTimeout(() => {
           navigate('/membres/mes-billets');
         }, 2000);
       }
     } catch (error: any) {
       console.error('Error loading order:', error);
-      setError('Impossible de charger la commande.');
+      setError(error.message || 'Impossible de charger la commande.');
     } finally {
       setLoading(false);
     }
@@ -136,32 +97,10 @@ export default function Paiement() {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const result = await ordersApi.createCheckoutSession(order.id);
 
-      if (!session) {
-        throw new Error('Vous devez être connecté pour effectuer un paiement.');
-      }
-
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId: order.id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la création de la session de paiement.');
-      }
-
-      const { sessionUrl } = await response.json();
-
-      if (sessionUrl) {
-        window.location.href = sessionUrl;
+      if (result.sessionUrl) {
+        window.location.href = result.sessionUrl;
       } else {
         throw new Error('URL de paiement non reçue.');
       }
@@ -180,7 +119,7 @@ export default function Paiement() {
     );
   }
 
-  if (error) {
+  if (error && !order) {
     return (
       <div className="container mx-auto px-4 py-16">
         <Alert variant="destructive">
@@ -194,9 +133,9 @@ export default function Paiement() {
     );
   }
 
-  if (!order || !event) return null;
+  if (!order) return null;
 
-  if (order.payment_status === 'paid') {
+  if (order.paymentStatus === 'PAID') {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto text-center">
@@ -230,7 +169,7 @@ export default function Paiement() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">Événement</p>
-                <p className="font-medium">{event.title}</p>
+                <p className="font-medium">{order.event.title}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Nombre de billets</p>
@@ -239,7 +178,7 @@ export default function Paiement() {
               <div className="border-t pt-4">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total à payer</span>
-                  <span>{(order.total_amount / 100).toFixed(2)} €</span>
+                  <span>{(order.totalAmount / 100).toFixed(2)} €</span>
                 </div>
               </div>
             </CardContent>
@@ -258,7 +197,14 @@ export default function Paiement() {
                 </AlertDescription>
               </Alert>
 
-              {order.payment_status === 'failed' && (
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {order.paymentStatus === 'FAILED' && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
@@ -281,7 +227,7 @@ export default function Paiement() {
                 ) : (
                   <>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Payer {(order.total_amount / 100).toFixed(2)} €
+                    Payer {(order.totalAmount / 100).toFixed(2)} €
                   </>
                 )}
               </Button>

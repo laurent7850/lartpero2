@@ -1,20 +1,10 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { adminApi, AdminDashboardStats } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, CreditCard, TrendingUp } from 'lucide-react';
 
-interface DashboardStats {
-  totalMembers: number;
-  activeMembers: number;
-  totalEvents: number;
-  upcomingEvents: number;
-  totalRevenue: number;
-  monthRevenue: number;
-  totalRegistrations: number;
-}
-
 export function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
+  const [stats, setStats] = useState<AdminDashboardStats>({
     totalMembers: 0,
     activeMembers: 0,
     totalEvents: 0,
@@ -22,9 +12,9 @@ export function AdminDashboard() {
     totalRevenue: 0,
     monthRevenue: 0,
     totalRegistrations: 0,
+    topEvents: [],
   });
   const [loading, setLoading] = useState(true);
-  const [topEvents, setTopEvents] = useState<Array<{ title: string; registrations: number }>>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -32,83 +22,8 @@ export function AdminDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [
-        membersResult,
-        activeMembersResult,
-        eventsResult,
-        upcomingEventsResult,
-        paymentsResult,
-        monthPaymentsResult,
-        registrationsResult,
-        topEventsResult,
-      ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase
-          .from('memberships')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'active'),
-        supabase.from('events').select('id', { count: 'exact', head: true }),
-        supabase
-          .from('events')
-          .select('id', { count: 'exact', head: true })
-          .gte('date_start', new Date().toISOString())
-          .eq('status', 'published'),
-        supabase.from('payments').select('amount_cents'),
-        supabase
-          .from('payments')
-          .select('amount_cents')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-        supabase
-          .from('event_registrations')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'paid'),
-        supabase
-          .from('event_registrations')
-          .select('event_id, events(title)')
-          .eq('status', 'paid'),
-      ]);
-
-      const totalRevenue = (paymentsResult.data || []).reduce(
-        (sum, payment) => sum + payment.amount_cents,
-        0
-      );
-
-      const monthRevenue = (monthPaymentsResult.data || []).reduce(
-        (sum, payment) => sum + payment.amount_cents,
-        0
-      );
-
-      const eventRegistrationCounts = new Map<string, { title: string; count: number }>();
-      (topEventsResult.data || []).forEach((reg: any) => {
-        if (reg.events && reg.events.title) {
-          const existing = eventRegistrationCounts.get(reg.event_id);
-          if (existing) {
-            existing.count++;
-          } else {
-            eventRegistrationCounts.set(reg.event_id, {
-              title: reg.events.title,
-              count: 1,
-            });
-          }
-        }
-      });
-
-      const topEventsArray = Array.from(eventRegistrationCounts.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5)
-        .map(e => ({ title: e.title, registrations: e.count }));
-
-      setStats({
-        totalMembers: membersResult.count || 0,
-        activeMembers: activeMembersResult.count || 0,
-        totalEvents: eventsResult.count || 0,
-        upcomingEvents: upcomingEventsResult.count || 0,
-        totalRevenue,
-        monthRevenue,
-        totalRegistrations: registrationsResult.count || 0,
-      });
-
-      setTopEvents(topEventsArray);
+      const data = await adminApi.getDashboard();
+      setStats(data);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -195,7 +110,7 @@ export function AdminDashboard() {
         </Card>
       </div>
 
-      {topEvents.length > 0 && (
+      {stats.topEvents.length > 0 && (
         <Card className="border-black/10 shadow-sm">
           <CardHeader>
             <CardTitle className="text-xl font-light">
@@ -204,7 +119,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topEvents.map((event, index) => (
+              {stats.topEvents.map((event, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-medium">

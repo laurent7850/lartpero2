@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: lartpero-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lartpero}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-lartpero}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lartpero-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lartpero} -d ${POSTGRES_DB:-lartpero}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: lartpero-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lartpero}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lartpero}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-https://lartpero.com}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-noreply@lartpero.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lartpero-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lartpero-api.rule=Host(`api.lartpero.com`)"
+      - "traefik.http.routers.lartpero-api.entrypoints=websecure"
+      - "traefik.http.routers.lartpero-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lartpero-api.loadbalancer.server.port=3001"
+      - "traefik.docker.network=traefik-public"
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.lartpero.com}
+    container_name: lartpero-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lartpero-frontend.rule=Host(`lartpero.com`) || Host(`www.lartpero.com`)"
+      - "traefik.http.routers.lartpero-frontend.entrypoints=websecure"
+      - "traefik.http.routers.lartpero-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lartpero-frontend.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-public"
+      # Redirect www to non-www
+      - "traefik.http.middlewares.lartpero-redirect.redirectregex.regex=^https://www\\.lartpero\\.com/(.*)"
+      - "traefik.http.middlewares.lartpero-redirect.redirectregex.replacement=https://lartpero.com/$${1}"
+      - "traefik.http.middlewares.lartpero-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.lartpero-frontend.middlewares=lartpero-redirect"
+
+networks:
+  lartpero-network:
+    driver: bridge
+  traefik-public:
+    external: true
+
+volumes:
+  postgres_data:

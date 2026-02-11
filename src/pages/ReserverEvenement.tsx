@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Event, supabase } from '@/lib/supabase';
+import { Event, eventsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,14 +35,8 @@ export default function ReserverEvenement() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .maybeSingle();
+      const data = await eventsApi.get(slug);
 
-      if (error) throw error;
       if (!data) {
         setError("Cet événement n'existe pas ou n'est pas disponible.");
         return;
@@ -70,7 +64,7 @@ export default function ReserverEvenement() {
 
   const getTotalAmount = () => {
     if (!event) return 0;
-    return (event.price_cents * quantity) / 100;
+    return (event.priceCents * quantity) / 100;
   };
 
   const handleReservation = async () => {
@@ -80,35 +74,16 @@ export default function ReserverEvenement() {
     setError(null);
 
     try {
-      const totalAmount = event.price_cents * quantity;
+      const result = await eventsApi.register(event.id, quantity) as { sessionUrl?: string; orderId?: string; free?: boolean };
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([
-          {
-            event_id: event.id,
-            user_id: user.id,
-            quantity: quantity,
-            total_amount: totalAmount,
-            payment_status: 'pending',
-          },
-        ])
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      if (totalAmount === 0) {
-        const { error: updateError } = await supabase
-          .from('orders')
-          .update({ payment_status: 'paid' })
-          .eq('id', order.id);
-
-        if (updateError) throw updateError;
-
-        navigate(`/membres/mes-billets?order=${order.id}`);
+      if (result.free) {
+        // Free event - redirect to tickets
+        navigate('/membres/mes-billets');
+      } else if (result.sessionUrl) {
+        // Paid event - redirect to Stripe
+        window.location.href = result.sessionUrl;
       } else {
-        navigate(`/paiement/${order.id}`);
+        setError('Une erreur est survenue lors de la réservation.');
       }
     } catch (error: any) {
       console.error('Error creating reservation:', error);
@@ -154,9 +129,9 @@ export default function ReserverEvenement() {
 
         <div className="grid md:grid-cols-2 gap-8">
           <div>
-            {event.image_url && (
+            {event.imageUrl && (
               <img
-                src={event.image_url}
+                src={event.imageUrl}
                 alt={event.title}
                 className="w-full h-64 object-cover rounded-lg mb-6"
               />
@@ -173,11 +148,11 @@ export default function ReserverEvenement() {
                   <div>
                     <p className="font-medium">Date et heure</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(event.date_start), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr })}
-                      {event.date_end && (
+                      {format(new Date(event.dateStart), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                      {event.dateEnd && (
                         <>
                           {' - '}
-                          {format(new Date(event.date_end), "HH:mm", { locale: fr })}
+                          {format(new Date(event.dateEnd), "HH:mm", { locale: fr })}
                         </>
                       )}
                     </p>
@@ -209,9 +184,9 @@ export default function ReserverEvenement() {
                   <div>
                     <p className="font-medium">Prix par billet</p>
                     <p className="text-sm text-muted-foreground">
-                      {event.price_cents === 0
+                      {event.priceCents === 0
                         ? 'Gratuit'
-                        : `${(event.price_cents / 100).toFixed(2)} €`}
+                        : `${(event.priceCents / 100).toFixed(2)} €`}
                     </p>
                   </div>
                 </div>
@@ -256,9 +231,9 @@ export default function ReserverEvenement() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Prix unitaire</span>
                     <span>
-                      {event.price_cents === 0
+                      {event.priceCents === 0
                         ? 'Gratuit'
-                        : `${(event.price_cents / 100).toFixed(2)} €`}
+                        : `${(event.priceCents / 100).toFixed(2)} €`}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -297,7 +272,7 @@ export default function ReserverEvenement() {
               </CardFooter>
             </Card>
 
-            {event.is_members_only && (
+            {event.isMembersOnly && (
               <Alert className="mt-4">
                 <AlertDescription>
                   Cet événement est réservé aux membres du Club des Gentlemen.

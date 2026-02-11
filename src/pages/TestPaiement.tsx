@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { ordersApi, membersApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,31 +8,20 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function TestPaiement() {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [orderId, setOrderId] = useState('');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const testVerifyPayment = async () => {
-    if (!orderId || !session) return;
+    if (!orderId) return;
 
     setLoading(true);
     setResult(null);
 
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId }),
-      });
-
-      const data = await response.json();
-      setResult({ status: response.status, data });
+      const data = await ordersApi.verifyPayment(orderId);
+      setResult({ success: true, data });
     } catch (error: any) {
       setResult({ error: error.message });
     } finally {
@@ -41,24 +30,18 @@ export default function TestPaiement() {
   };
 
   const checkSession = () => {
-    const authData = localStorage.getItem('lartpero-auth');
+    const authToken = localStorage.getItem('auth_token');
     setResult({
       user: user?.id,
-      session: session?.access_token ? 'Present' : 'Missing',
-      localStorage: authData ? 'Present' : 'Missing',
+      token: authToken ? 'Present' : 'Missing',
     });
   };
 
-  const checkOrders = async () => {
+  const checkRegistrations = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      setResult({ orders: data, error });
+      const data = await membersApi.getRegistrations();
+      setResult({ registrations: data });
     } catch (error: any) {
       setResult({ error: error.message });
     } finally {
@@ -69,13 +52,8 @@ export default function TestPaiement() {
   const checkTickets = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('*, events(title)')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      setResult({ tickets: data, error });
+      const data = await membersApi.getTickets();
+      setResult({ tickets: data });
     } catch (error: any) {
       setResult({ error: error.message });
     } finally {
@@ -99,9 +77,9 @@ export default function TestPaiement() {
                 <p className="text-sm text-muted-foreground">{user?.id || 'Non connecté'}</p>
               </div>
               <div>
-                <p className="text-sm font-medium">Session</p>
+                <p className="text-sm font-medium">Email</p>
                 <p className="text-sm text-muted-foreground">
-                  {session ? 'Connecté' : 'Non connecté'}
+                  {user?.email || 'Non connecté'}
                 </p>
               </div>
               <Button onClick={checkSession} variant="outline">
@@ -136,8 +114,8 @@ export default function TestPaiement() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
-                <Button onClick={checkOrders} disabled={loading} variant="outline">
-                  Voir les commandes
+                <Button onClick={checkRegistrations} disabled={loading} variant="outline">
+                  Voir les inscriptions
                 </Button>
                 <Button onClick={checkTickets} disabled={loading} variant="outline">
                   Voir les billets

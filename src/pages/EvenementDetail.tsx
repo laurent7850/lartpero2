@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase, Event } from '@/lib/supabase';
+import { eventsApi, Event } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,14 +23,7 @@ export function EvenementDetail() {
 
   const loadEvent = async () => {
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await eventsApi.get(slug!);
       setEvent(data);
     } catch (error) {
       console.error('Error loading event:', error);
@@ -82,10 +75,10 @@ export function EvenementDetail() {
           Retour aux événements
         </Button>
 
-        {event.image_url && (
+        {event.imageUrl && (
           <div className="aspect-video mb-8 overflow-hidden">
             <img
-              src={event.image_url}
+              src={event.imageUrl}
               alt={event.title}
               className="w-full h-full object-cover grayscale"
             />
@@ -94,7 +87,7 @@ export function EvenementDetail() {
 
         <div className="flex items-start justify-between gap-4 mb-6">
           <h1 className="text-4xl md:text-5xl font-light">{event.title}</h1>
-          {event.is_members_only && (
+          {event.isMembersOnly && (
             <Badge variant="outline" className="border-black/20 flex-shrink-0">
               Membres uniquement
             </Badge>
@@ -105,7 +98,7 @@ export function EvenementDetail() {
           <div className="flex items-center gap-3 text-black/70">
             <Calendar className="w-5 h-5" />
             <span className="text-lg">
-              {format(new Date(event.date_start), 'PPPp', { locale: fr })}
+              {format(new Date(event.dateStart), 'PPPp', { locale: fr })}
             </span>
           </div>
           {event.location && (
@@ -132,9 +125,9 @@ export function EvenementDetail() {
 
         <div className="flex items-center justify-between p-8 bg-black text-white">
           <div>
-            {event.price_cents > 0 ? (
+            {event.priceCents > 0 ? (
               <div className="text-3xl font-light">
-                {(event.price_cents / 100).toFixed(2)} €
+                {(event.priceCents / 100).toFixed(2)} €
               </div>
             ) : (
               <div className="text-xl">Gratuit</div>
@@ -150,7 +143,7 @@ export function EvenementDetail() {
           </Button>
         </div>
 
-        {event.is_members_only && !user && (
+        {event.isMembersOnly && !user && (
           <div className="mt-8 p-6 border border-black/10 text-center">
             <p className="text-black/70 mb-4">
               Cet événement est réservé aux membres du Club des Gentlemen

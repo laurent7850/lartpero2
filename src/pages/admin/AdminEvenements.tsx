@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, Event } from '@/lib/supabase';
+import { adminApi, AdminEvent, Event } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,18 +19,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-interface EventWithRegistrations extends Event {
-  registrations_count: number;
-}
-
 export function AdminEvenements() {
   const { toast } = useToast();
-  const [events, setEvents] = useState<EventWithRegistrations[]>([]);
+  const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<AdminEvent | null>(null);
 
   useEffect(() => {
     loadEvents();
@@ -38,29 +34,8 @@ export function AdminEvenements() {
 
   const loadEvents = async () => {
     try {
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*')
-        .order('date_start', { ascending: false });
-
-      if (eventsError) throw eventsError;
-
-      const eventsWithCounts = await Promise.all(
-        (eventsData || []).map(async (event) => {
-          const { count } = await supabase
-            .from('event_registrations')
-            .select('id', { count: 'exact', head: true })
-            .eq('event_id', event.id)
-            .eq('status', 'paid');
-
-          return {
-            ...event,
-            registrations_count: count || 0,
-          };
-        })
-      );
-
-      setEvents(eventsWithCounts);
+      const data = await adminApi.getEvents();
+      setEvents(data || []);
     } catch (error) {
       console.error('Error loading events:', error);
     } finally {
@@ -68,7 +43,7 @@ export function AdminEvenements() {
     }
   };
 
-  const handleEdit = (event: Event) => {
+  const handleEdit = (event: AdminEvent) => {
     setSelectedEvent(event);
     setFormOpen(true);
   };
@@ -82,12 +57,7 @@ export function AdminEvenements() {
     if (!eventToDelete) return;
 
     try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventToDelete.id);
-
-      if (error) throw error;
+      await adminApi.deleteEvent(eventToDelete.id);
 
       toast({
         title: 'Événement supprimé',
@@ -108,7 +78,7 @@ export function AdminEvenements() {
     }
   };
 
-  const confirmDelete = (event: Event) => {
+  const confirmDelete = (event: AdminEvent) => {
     setEventToDelete(event);
     setDeleteDialogOpen(true);
   };
@@ -144,17 +114,17 @@ export function AdminEvenements() {
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-xl font-light">{event.title}</h3>
                     <Badge
-                      variant={event.status === 'published' ? 'default' : 'outline'}
-                      className={event.status === 'published' ? 'bg-black border-black' : ''}
+                      variant={event.status === 'PUBLISHED' ? 'default' : 'outline'}
+                      className={event.status === 'PUBLISHED' ? 'bg-black border-black' : ''}
                     >
-                      {event.status === 'published' ? 'Publié' : 'Brouillon'}
+                      {event.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
                     </Badge>
-                    {event.is_members_only && (
+                    {event.isMembersOnly && (
                       <Badge variant="outline">Membres uniquement</Badge>
                     )}
                   </div>
                   <p className="text-sm text-black/60 mb-2">
-                    {format(new Date(event.date_start), 'PPP', { locale: fr })}
+                    {format(new Date(event.dateStart), 'PPP', { locale: fr })}
                   </p>
                   {event.location && (
                     <p className="text-sm text-black/60 mb-2">{event.location}</p>
@@ -162,7 +132,7 @@ export function AdminEvenements() {
                   <div className="flex items-center gap-2 mt-3">
                     <Users className="w-4 h-4 text-black/60" />
                     <span className="text-sm font-medium">
-                      {event.registrations_count} inscription{event.registrations_count > 1 ? 's' : ''}
+                      {event.registrationsCount} inscription{event.registrationsCount > 1 ? 's' : ''}
                     </span>
                     {event.capacity && (
                       <span className="text-sm text-black/60">

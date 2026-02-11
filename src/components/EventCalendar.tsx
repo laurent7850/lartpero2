@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { Event } from '@/lib/supabase';
+import { Event } from '@/lib/api';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,11 +16,11 @@ interface EventCalendarProps {
 export function EventCalendar({ events }: EventCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const eventDates = events.map(event => new Date(event.date_start));
+  const eventDates = events.map(event => new Date(event.dateStart));
 
   const eventsOnSelectedDate = selectedDate
     ? events.filter(event => {
-        const eventDate = new Date(event.date_start);
+        const eventDate = new Date(event.dateStart);
         return (
           eventDate.getDate() === selectedDate.getDate() &&
           eventDate.getMonth() === selectedDate.getMonth() &&
@@ -164,7 +164,7 @@ export function EventCalendar({ events }: EventCalendarProps) {
                           <h4 className="text-xl font-light text-gray-900">
                             {event.title}
                           </h4>
-                          {event.is_members_only && (
+                          {event.isMembersOnly && (
                             <Badge variant="outline" className="border-black/20 flex-shrink-0">
                               Membres
                             </Badge>
@@ -174,7 +174,7 @@ export function EventCalendar({ events }: EventCalendarProps) {
                           <div className="flex items-center gap-2 text-sm text-black/60">
                             <Calendar className="w-4 h-4" />
                             <span>
-                              {format(new Date(event.date_start), 'HH:mm', { locale: fr })}
+                              {format(new Date(event.dateStart), 'HH:mm', { locale: fr })}
                             </span>
                           </div>
                           {event.location && (
@@ -189,9 +189,9 @@ export function EventCalendar({ events }: EventCalendarProps) {
                               <span>{event.capacity} places</span>
                             </div>
                           )}
-                          {event.price_cents > 0 && (
+                          {event.priceCents > 0 && (
                             <div className="text-base font-medium pt-2 border-t border-black/10">
-                              {(event.price_cents / 100).toFixed(2)} €
+                              {(event.priceCents / 100).toFixed(2)} €
                             </div>
                           )}
                         </div>

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/lib/supabase';
+import { messagesApi } from '@/lib/api';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,18 +47,14 @@ export function Contact() {
     setLoading(true);
 
     try {
-      const { error: insertError } = await supabase.from('messages').insert([
-        {
-          name: data.name,
-          email: data.email,
-          phone: data.phone || null,
-          subject: data.subject || null,
-          body: data.body,
-          consent: data.consent,
-        },
-      ]);
-
-      if (insertError) throw insertError;
+      await messagesApi.send({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: data.subject,
+        body: data.body,
+        consent: data.consent,
+      });
 
       setSuccess(true);
       reset();

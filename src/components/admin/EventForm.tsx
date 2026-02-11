@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Event, supabase } from '@/lib/supabase';
+import { Event, adminApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,13 +35,13 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
     slug: '',
     description: '',
     location: '',
-    date_start: '',
-    date_end: '',
+    dateStart: '',
+    dateEnd: '',
     capacity: '',
-    is_members_only: false,
-    price_cents: '',
-    status: 'draft' as 'draft' | 'published',
-    image_url: '',
+    isMembersOnly: false,
+    priceCents: '',
+    status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
+    imageUrl: '',
   });
 
   useEffect(() => {
@@ -51,13 +51,13 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
         slug: event.slug,
         description: event.description || '',
         location: event.location || '',
-        date_start: event.date_start.slice(0, 16),
-        date_end: event.date_end ? event.date_end.slice(0, 16) : '',
+        dateStart: event.dateStart.slice(0, 16),
+        dateEnd: event.dateEnd ? event.dateEnd.slice(0, 16) : '',
         capacity: event.capacity?.toString() || '',
-        is_members_only: event.is_members_only,
-        price_cents: (event.price_cents / 100).toString(),
+        isMembersOnly: event.isMembersOnly,
+        priceCents: (event.priceCents / 100).toString(),
         status: event.status,
-        image_url: event.image_url || '',
+        imageUrl: event.imageUrl || '',
       });
     } else {
       setFormData({
@@ -65,13 +65,13 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
         slug: '',
         description: '',
         location: '',
-        date_start: '',
-        date_end: '',
+        dateStart: '',
+        dateEnd: '',
         capacity: '',
-        is_members_only: false,
-        price_cents: '0',
-        status: 'draft',
-        image_url: '',
+        isMembersOnly: false,
+        priceCents: '0',
+        status: 'DRAFT',
+        imageUrl: '',
       });
     }
   }, [event, open]);
@@ -101,33 +101,26 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
       const eventData = {
         title: formData.title,
         slug: formData.slug,
-        description: formData.description || null,
-        location: formData.location || null,
-        date_start: new Date(formData.date_start).toISOString(),
-        date_end: formData.date_end ? new Date(formData.date_end).toISOString() : null,
-        capacity: formData.capacity ? parseInt(formData.capacity) : null,
-        is_members_only: formData.is_members_only,
-        price_cents: Math.round(parseFloat(formData.price_cents) * 100),
+        description: formData.description || undefined,
+        location: formData.location || undefined,
+        dateStart: new Date(formData.dateStart).toISOString(),
+        dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : undefined,
+        capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
+        isMembersOnly: formData.isMembersOnly,
+        priceCents: Math.round(parseFloat(formData.priceCents) * 100),
         status: formData.status,
-        image_url: formData.image_url || null,
+        imageUrl: formData.imageUrl || undefined,
       };
 
       if (event) {
-        const { error } = await supabase
-          .from('events')
-          .update(eventData)
-          .eq('id', event.id);
-
-        if (error) throw error;
+        await adminApi.updateEvent(event.id, eventData);
 
         toast({
           title: 'Événement modifié',
           description: 'Les modifications ont été enregistrées avec succès.',
         });
       } else {
-        const { error } = await supabase.from('events').insert([eventData]);
-
-        if (error) throw error;
+        await adminApi.createEvent(eventData);
 
         toast({
           title: 'Événement créé',
@@ -191,23 +184,23 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date_start">Date de début *</Label>
+              <Label htmlFor="dateStart">Date de début *</Label>
               <Input
-                id="date_start"
+                id="dateStart"
                 type="datetime-local"
-                value={formData.date_start}
-                onChange={(e) => setFormData({ ...formData, date_start: e.target.value })}
+                value={formData.dateStart}
+                onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="date_end">Date de fin</Label>
+              <Label htmlFor="dateEnd">Date de fin</Label>
               <Input
-                id="date_end"
+                id="dateEnd"
                 type="datetime-local"
-                value={formData.date_end}
-                onChange={(e) => setFormData({ ...formData, date_end: e.target.value })}
+                value={formData.dateEnd}
+                onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
               />
             </div>
           </div>
@@ -233,26 +226,26 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price_cents">Prix (€) *</Label>
+              <Label htmlFor="priceCents">Prix (€) *</Label>
               <Input
-                id="price_cents"
+                id="priceCents"
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.price_cents}
-                onChange={(e) => setFormData({ ...formData, price_cents: e.target.value })}
+                value={formData.priceCents}
+                onChange={(e) => setFormData({ ...formData, priceCents: e.target.value })}
                 required
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image_url">URL de l'image</Label>
+            <Label htmlFor="imageUrl">URL de l'image</Label>
             <Input
-              id="image_url"
+              id="imageUrl"
               type="url"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
             />
           </div>
 
@@ -260,7 +253,7 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
             <Label htmlFor="status">Statut *</Label>
             <Select
               value={formData.status}
-              onValueChange={(value: 'draft' | 'published') =>
+              onValueChange={(value: 'DRAFT' | 'PUBLISHED') =>
                 setFormData({ ...formData, status: value })
               }
             >
@@ -268,21 +261,21 @@ export function EventForm({ event, open, onOpenChange, onSuccess }: EventFormPro
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="draft">Brouillon</SelectItem>
-                <SelectItem value="published">Publié</SelectItem>
+                <SelectItem value="DRAFT">Brouillon</SelectItem>
+                <SelectItem value="PUBLISHED">Publié</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex items-center space-x-2">
             <Switch
-              id="is_members_only"
-              checked={formData.is_members_only}
+              id="isMembersOnly"
+              checked={formData.isMembersOnly}
               onCheckedChange={(checked) =>
-                setFormData({ ...formData, is_members_only: checked })
+                setFormData({ ...formData, isMembersOnly: checked })
               }
             />
-            <Label htmlFor="is_members_only" className="cursor-pointer">
+            <Label htmlFor="isMembersOnly" className="cursor-pointer">
               Réservé aux membres uniquement
             </Label>
           </div>

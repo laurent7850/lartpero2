@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Product } from '@/lib/supabase';
+import { productsApi, Product } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { Gift, Crown, Ticket } from 'lucide-react';
 
 export function Boutique() {
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,14 +28,7 @@ export function Boutique() {
 
   const loadProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .order('category')
-        .order('price_cents');
-
-      if (error) throw error;
+      const data = await productsApi.list();
       setProducts(data || []);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -50,7 +43,7 @@ export function Boutique() {
   };
 
   const handlePurchase = async (product: Product) => {
-    if (!user || !session) {
+    if (!user) {
       toast({
         title: 'Connexion requise',
         description: 'Veuillez vous connecter pour effectuer un achat',
@@ -60,7 +53,7 @@ export function Boutique() {
       return;
     }
 
-    if (product.category === 'gift_card') {
+    if (product.category === 'GIFT_CARD') {
       setSelectedGiftProduct(product);
       setGiftDialogOpen(true);
       return;
@@ -73,28 +66,12 @@ export function Boutique() {
     setPurchasing(product.id);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-product-checkout`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            productId: product.id,
-            quantity: 1,
-            recipientName: giftRecipient?.name,
-            recipientEmail: giftRecipient?.email,
-          }),
-        }
+      const data = await productsApi.checkout(
+        product.id,
+        1,
+        giftRecipient?.name,
+        giftRecipient?.email
       );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la création du paiement');
-      }
 
       if (data.sessionUrl) {
         window.location.href = data.sessionUrl;
@@ -140,9 +117,9 @@ export function Boutique() {
     }).format(cents / 100);
   };
 
-  const subscriptions = products.filter((p) => p.category === 'subscription');
-  const entries = products.filter((p) => p.category === 'entry');
-  const giftCards = products.filter((p) => p.category === 'gift_card');
+  const subscriptions = products.filter((p) => p.category === 'SUBSCRIPTION');
+  const entries = products.filter((p) => p.category === 'ENTRY');
+  const giftCards = products.filter((p) => p.category === 'GIFT_CARD');
 
   if (loading) {
     return (
@@ -178,13 +155,13 @@ export function Boutique() {
                     <CardHeader>
                       <CardTitle className="text-xl">{product.name}</CardTitle>
                       <CardDescription>
-                        {product.duration_months} mois • {product.events_included} events
+                        {product.durationMonths} mois • {product.eventsIncluded} events
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <p className="text-sm text-gray-600">{product.description}</p>
                       <div className="text-2xl font-bold text-black">
-                        {formatPrice(product.price_cents)}
+                        {formatPrice(product.priceCents)}
                       </div>
                       <Button
                         className="w-full"
@@ -213,13 +190,13 @@ export function Boutique() {
                     <CardHeader>
                       <CardTitle className="text-xl">{product.name}</CardTitle>
                       <CardDescription>
-                        {product.events_included} event{product.events_included && product.events_included > 1 ? 's' : ''}
+                        {product.eventsIncluded} event{product.eventsIncluded && product.eventsIncluded > 1 ? 's' : ''}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <p className="text-sm text-gray-600">{product.description}</p>
                       <div className="text-2xl font-bold text-black">
-                        {formatPrice(product.price_cents)}
+                        {formatPrice(product.priceCents)}
                       </div>
                       <Button
                         className="w-full"
@@ -248,13 +225,13 @@ export function Boutique() {
                     <CardHeader>
                       <CardTitle className="text-xl">{product.name}</CardTitle>
                       <CardDescription>
-                        {product.events_included} event{product.events_included && product.events_included > 1 ? 's' : ''} • Valable 6 mois
+                        {product.eventsIncluded} event{product.eventsIncluded && product.eventsIncluded > 1 ? 's' : ''} • Valable 6 mois
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <p className="text-sm text-gray-600">{product.description}</p>
                       <div className="text-2xl font-bold text-black">
-                        {formatPrice(product.price_cents)}
+                        {formatPrice(product.priceCents)}
                       </div>
                       <Button
                         className="w-full bg-pink-600 hover:bg-pink-700"
@@ -278,7 +255,7 @@ export function Boutique() {
           <DialogHeader>
             <DialogTitle>Offrir une carte cadeau</DialogTitle>
             <DialogDescription>
-              {selectedGiftProduct?.name} - {selectedGiftProduct && formatPrice(selectedGiftProduct.price_cents)}
+              {selectedGiftProduct?.name} - {selectedGiftProduct && formatPrice(selectedGiftProduct.priceCents)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

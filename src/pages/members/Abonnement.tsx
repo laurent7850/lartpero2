@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Membership } from '@/lib/supabase';
+import { membersApi, Membership } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,13 +20,7 @@ export function Abonnement() {
 
   const loadMembership = async () => {
     try {
-      const { data, error } = await supabase
-        .from('memberships')
-        .select('*')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await membersApi.getMembership();
       setMembership(data);
     } catch (error) {
       console.error('Error loading membership:', error);
@@ -37,11 +31,11 @@ export function Abonnement() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'ACTIVE':
         return 'Actif';
-      case 'canceled':
+      case 'CANCELED':
         return 'Résilié';
-      case 'past_due':
+      case 'PAST_DUE':
         return 'Impayé';
       default:
         return 'Aucun';
@@ -50,11 +44,11 @@ export function Abonnement() {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'ACTIVE':
         return 'default';
-      case 'canceled':
+      case 'CANCELED':
         return 'outline';
-      case 'past_due':
+      case 'PAST_DUE':
         return 'destructive';
       default:
         return 'outline';
@@ -88,7 +82,7 @@ export function Abonnement() {
               <Badge
                 variant={getStatusVariant(membership.status) as any}
                 className={
-                  membership.status === 'active'
+                  membership.status === 'ACTIVE'
                     ? 'bg-black border-black'
                     : ''
                 }
@@ -99,15 +93,12 @@ export function Abonnement() {
           </div>
         </CardHeader>
         <CardContent>
-          {!membership || membership.status === 'none' ? (
+          {!membership || membership.status === 'NONE' ? (
             <div className="py-8 text-center">
               <p className="text-black/60 mb-6">
                 Vous n'avez pas encore d'abonnement actif.
               </p>
               <Button>Souscrire à un abonnement</Button>
-              <p className="text-sm text-black/60 mt-4">
-                L'intégration Stripe sera configurée prochainement
-              </p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -118,42 +109,29 @@ export function Abonnement() {
                     {getStatusLabel(membership.status)}
                   </span>
                 </div>
-                {membership.current_period_end && (
+                {membership.currentPeriodEnd && (
                   <div className="flex justify-between py-3 border-b border-black/10">
                     <span className="text-black/60">
-                      {membership.status === 'active'
+                      {membership.status === 'ACTIVE'
                         ? 'Renouvellement le'
                         : 'Fin le'}
                     </span>
                     <span className="font-medium">
                       {format(
-                        new Date(membership.current_period_end),
+                        new Date(membership.currentPeriodEnd),
                         'PP',
                         { locale: fr }
                       )}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between py-3 border-b border-black/10">
-                  <span className="text-black/60">Membre depuis</span>
-                  <span className="font-medium">
-                    {format(
-                      new Date(membership.created_at),
-                      'PP',
-                      { locale: fr }
-                    )}
-                  </span>
-                </div>
               </div>
 
-              {membership.status === 'active' && (
+              {membership.status === 'ACTIVE' && (
                 <div className="pt-6">
                   <Button variant="outline" className="w-full">
                     Gérer mon abonnement
                   </Button>
-                  <p className="text-sm text-center text-black/60 mt-3">
-                    Le portail client Stripe sera disponible prochainement
-                  </p>
                 </div>
               )}
             </div>

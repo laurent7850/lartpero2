@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, Event } from '@/lib/supabase';
+import { eventsApi, Event } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Grid, CalendarDays } from 'lucide-react';
@@ -20,24 +20,22 @@ export function Evenements() {
 
   const loadEvents = async () => {
     try {
-      let query = supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'published')
-        .order('date_start', { ascending: true });
+      const data = await eventsApi.list();
+
+      let filteredEvents = data || [];
 
       if (filter === 'upcoming') {
-        query = query.gte('date_start', new Date().toISOString());
+        filteredEvents = filteredEvents.filter(e => new Date(e.dateStart) >= new Date());
       }
 
       if (filter === 'members') {
-        query = query.eq('is_members_only', true);
+        filteredEvents = filteredEvents.filter(e => e.isMembersOnly);
       }
 
-      const { data, error } = await query;
+      // Sort by date
+      filteredEvents.sort((a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime());
 
-      if (error) throw error;
-      setEvents(data || []);
+      setEvents(filteredEvents);
     } catch (error) {
       console.error('Error loading events:', error);
     } finally {
@@ -139,10 +137,10 @@ export function Evenements() {
             {events.map((event) => (
               <Link key={event.id} to={`/evenements/${event.slug}`}>
                 <Card className="border-black/10 shadow-none hover:shadow-lg transition-shadow h-full">
-                  {event.image_url && (
+                  {event.imageUrl && (
                     <div className="aspect-video overflow-hidden">
                       <img
-                        src={event.image_url}
+                        src={event.imageUrl}
                         alt={event.title}
                         className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all"
                       />
@@ -153,7 +151,7 @@ export function Evenements() {
                       <CardTitle className="text-xl font-light">
                         {event.title}
                       </CardTitle>
-                      {event.is_members_only && (
+                      {event.isMembersOnly && (
                         <Badge variant="outline" className="border-black/20 flex-shrink-0">
                           Membres
                         </Badge>
@@ -164,7 +162,7 @@ export function Evenements() {
                     <div className="flex items-center gap-2 text-sm text-black/60">
                       <Calendar className="w-4 h-4" />
                       <span>
-                        {format(new Date(event.date_start), 'PPP', { locale: fr })}
+                        {format(new Date(event.dateStart), 'PPP', { locale: fr })}
                       </span>
                     </div>
                     {event.location && (
@@ -179,9 +177,9 @@ export function Evenements() {
                         <span>{event.capacity} places</span>
                       </div>
                     )}
-                    {event.price_cents > 0 && (
+                    {event.priceCents > 0 && (
                       <div className="text-sm font-medium pt-2">
-                        {(event.price_cents / 100).toFixed(2)} €
+                        {(event.priceCents / 100).toFixed(2)} €
                       </div>
                     )}
                   </CardContent>
