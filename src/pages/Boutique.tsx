@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, Gift, Crown, Ticket } from 'lucide-react';
+import { Gift, Crown, Ticket } from 'lucide-react';
 
 export function Boutique() {
   const navigate = useNavigate();
@@ -143,19 +143,6 @@ export function Boutique() {
   const subscriptions = products.filter((p) => p.category === 'subscription');
   const entries = products.filter((p) => p.category === 'entry');
   const giftCards = products.filter((p) => p.category === 'gift_card');
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'subscription':
-        return <Crown className="w-5 h-5" />;
-      case 'entry':
-        return <Ticket className="w-5 h-5" />;
-      case 'gift_card':
-        return <Gift className="w-5 h-5" />;
-      default:
-        return <ShoppingCart className="w-5 h-5" />;
-    }
-  };
 
   if (loading) {
     return (

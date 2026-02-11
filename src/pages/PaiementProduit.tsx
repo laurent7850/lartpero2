@@ -11,7 +11,7 @@ export function PaiementProduit() {
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { session } = useAuth();
   const { toast } = useToast();
 
   const [order, setOrder] = useState<ProductOrder | null>(null);
