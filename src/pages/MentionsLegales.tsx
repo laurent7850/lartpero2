@@ -11,16 +11,19 @@ export function MentionsLegales() {
             <h2 className="text-2xl font-light mb-4">Éditeur du site</h2>
             <p>
               L'ArtPéro<br />
-              [Adresse à compléter]<br />
-              Email : contact@lartpero.fr
+              Avenue Louise 54<br />
+              B-1050 Ixelles<br />
+              BCE / TVA : BE0744 809 451<br />
+              Email : <a href="mailto:info@the-event.be" className="underline">info@the-event.be</a><br />
+              Tél : +32(0)2 378 28 63
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-light mb-4">Hébergement</h2>
             <p>
-              Ce site est hébergé par Supabase Inc.<br />
-              970 Toa Payoh North, #07-04, Singapore 318992
+              Ce site est hébergé par Hostinger International Ltd.<br />
+              Švitrigailos str. 34, Vilnius 03230, Lituanie
             </p>
           </section>
 
@@ -29,8 +32,8 @@ export function MentionsLegales() {
             <p>
               Conformément au Règlement Général sur la Protection des Données (RGPD),
               vous disposez d'un droit d'accès, de rectification et de suppression de vos
-              données personnelles. Pour exercer ce droit, contactez-nous à l'adresse :
-              contact@lartpero.fr
+              données personnelles. Pour exercer ce droit, contactez-nous à l'adresse :{' '}
+              <a href="mailto:info@the-event.be" className="underline">info@the-event.be</a>
             </p>
           </section>
 
