@@ -15,7 +15,7 @@ model User {
   firstName         String?   @map("first_name")
   lastName          String?   @map("last_name")
   phone             String?
-  role              Role      @default(MEMBER)
+  role              String    @default("MEMBER")
   emailVerifiedAt   DateTime? @map("email_verified_at")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
@@ -43,51 +43,39 @@ model Session {
   @@map("sessions")
 }
 
-enum Role {
-  MEMBER
-  ADMIN
-}
-
 // Memberships
 model Membership {
-  id                   String           @id @default(uuid())
-  userId               String           @unique @map("user_id")
-  status               MembershipStatus @default(NONE)
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  status               String   @default("NONE")
   plan                 String?
-  stripeCustomerId     String?          @unique @map("stripe_customer_id")
-  stripeSubscriptionId String?          @unique @map("stripe_subscription_id")
-  currentPeriodEnd     DateTime?        @map("current_period_end")
-  createdAt            DateTime         @default(now()) @map("created_at")
-  updatedAt            DateTime         @updatedAt @map("updated_at")
+  stripeCustomerId     String?  @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("memberships")
 }
 
-enum MembershipStatus {
-  NONE
-  ACTIVE
-  CANCELED
-  PAST_DUE
-}
-
 // Events
 model Event {
-  id            String      @id @default(uuid())
+  id            String   @id @default(uuid())
   title         String
-  slug          String      @unique
+  slug          String   @unique
   description   String?
   location      String?
-  dateStart     DateTime    @map("date_start")
-  dateEnd       DateTime?   @map("date_end")
+  dateStart     DateTime @map("date_start")
+  dateEnd       DateTime? @map("date_end")
   capacity      Int?
-  isMembersOnly Boolean     @default(false) @map("is_members_only")
-  priceCents    Int         @default(0) @map("price_cents")
-  status        EventStatus @default(DRAFT)
-  imageUrl      String?     @map("image_url")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
+  isMembersOnly Boolean  @default(false) @map("is_members_only")
+  priceCents    Int      @default(0) @map("price_cents")
+  status        String   @default("DRAFT")
+  imageUrl      String?  @map("image_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   registrations EventRegistration[]
   orders        Order[]
@@ -96,22 +84,17 @@ model Event {
   @@map("events")
 }
 
-enum EventStatus {
-  DRAFT
-  PUBLISHED
-}
-
 model EventRegistration {
-  id                    String               @id @default(uuid())
-  eventId               String               @map("event_id")
-  userId                String               @map("user_id")
-  status                RegistrationStatus   @default(PENDING)
-  stripePaymentIntentId String?              @map("stripe_payment_intent_id")
-  stripeSessionId       String?              @map("stripe_session_id")
-  quantity              Int                  @default(1)
-  totalCents            Int                  @map("total_cents")
-  createdAt             DateTime             @default(now()) @map("created_at")
-  updatedAt             DateTime             @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  eventId               String   @map("event_id")
+  userId                String   @map("user_id")
+  status                String   @default("PENDING")
+  stripePaymentIntentId String?  @map("stripe_payment_intent_id")
+  stripeSessionId       String?  @map("stripe_session_id")
+  quantity              Int      @default(1)
+  totalCents            Int      @map("total_cents")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -119,23 +102,17 @@ model EventRegistration {
   @@map("event_registrations")
 }
 
-enum RegistrationStatus {
-  PENDING
-  PAID
-  CANCELED
-}
-
 // Orders & Tickets
 model Order {
-  id              String        @id @default(uuid())
-  eventId         String        @map("event_id")
-  userId          String        @map("user_id")
+  id              String   @id @default(uuid())
+  eventId         String   @map("event_id")
+  userId          String   @map("user_id")
   quantity        Int
-  totalAmount     Int           @map("total_amount")
-  paymentStatus   PaymentStatus @default(PENDING) @map("payment_status")
-  paymentIntentId String?       @map("payment_intent_id")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  totalAmount     Int      @map("total_amount")
+  paymentStatus   String   @default("PENDING") @map("payment_status")
+  paymentIntentId String?  @map("payment_intent_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -145,74 +122,62 @@ model Order {
 }
 
 model Ticket {
-  id                   String       @id @default(uuid())
-  eventId              String       @map("event_id")
-  orderId              String?      @map("order_id")
-  eventRegistrationId  String?      @map("event_registration_id")
-  userId               String       @map("user_id")
-  ticketCode           String       @unique @default(uuid()) @map("ticket_code")
-  status               TicketStatus @default(VALID)
-  isUsed               Boolean      @default(false) @map("is_used")
-  usedAt               DateTime?    @map("used_at")
-  createdAt            DateTime     @default(now()) @map("created_at")
+  id                   String    @id @default(uuid())
+  eventId              String    @map("event_id")
+  orderId              String?   @map("order_id")
+  eventRegistrationId  String?   @map("event_registration_id")
+  userId               String    @map("user_id")
+  ticketCode           String    @unique @default(uuid()) @map("ticket_code")
+  status               String    @default("VALID")
+  isUsed               Boolean   @default(false) @map("is_used")
+  usedAt               DateTime? @map("used_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tickets")
 }
 
-enum TicketStatus {
-  VALID
-  USED
-  CANCELLED
-}
-
 // Products (Subscriptions, Entries, Gift Cards)
 model Product {
-  id              String          @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
-  slug            String          @unique
+  slug            String   @unique
   description     String?
-  category        ProductCategory
-  priceCents      Int             @map("price_cents")
-  durationMonths  Int?            @map("duration_months")
-  eventsIncluded  Int?            @map("events_included")
-  isActive        Boolean         @default(true) @map("is_active")
-  stripePriceId   String?         @map("stripe_price_id")
-  metadata        Json            @default("{}")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  category        String
+  priceCents      Int      @map("price_cents")
+  durationMonths  Int?     @map("duration_months")
+  eventsIncluded  Int?     @map("events_included")
+  isActive        Boolean  @default(true) @map("is_active")
+  stripePriceId   String?  @map("stripe_price_id")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   productOrders ProductOrder[]
 
   @@map("products")
 }
 
-enum ProductCategory {
-  SUBSCRIPTION
-  ENTRY
-  GIFT_CARD
-}
-
 model ProductOrder {
-  id                  String        @id @default(uuid())
-  productId           String?       @map("product_id")
-  userId              String        @map("user_id")
-  quantity            Int           @default(1)
-  totalAmount         Int           @map("total_amount")
-  paymentStatus       PaymentStatus @default(PENDING) @map("payment_status")
-  stripeSessionId     String?       @map("stripe_session_id")
-  stripePaymentIntent String?       @map("stripe_payment_intent")
-  recipientEmail      String?       @map("recipient_email")
-  recipientName       String?       @map("recipient_name")
-  giftCode            String?       @unique @map("gift_code")
-  giftCodeUsed        Boolean       @default(false) @map("gift_code_used")
-  expiresAt           DateTime?     @map("expires_at")
-  metadata            Json          @default("{}")
-  createdAt           DateTime      @default(now()) @map("created_at")
-  updatedAt           DateTime      @updatedAt @map("updated_at")
+  id                  String    @id @default(uuid())
+  productId           String?   @map("product_id")
+  userId              String    @map("user_id")
+  quantity            Int       @default(1)
+  totalAmount         Int       @map("total_amount")
+  paymentStatus       String    @default("PENDING") @map("payment_status")
+  stripeSessionId     String?   @map("stripe_session_id")
+  stripePaymentIntent String?   @map("stripe_payment_intent")
+  recipientEmail      String?   @map("recipient_email")
+  recipientName       String?   @map("recipient_name")
+  giftCode            String?   @unique @map("gift_code")
+  giftCodeUsed        Boolean   @default(false) @map("gift_code_used")
+  expiresAt           DateTime? @map("expires_at")
+  metadata            Json      @default("{}")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -220,18 +185,11 @@ model ProductOrder {
   @@map("product_orders")
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
-}
-
 // Payments (Audit Log)
 model Payment {
   id                    String   @id @default(uuid())
   userId                String   @map("user_id")
-  kind                  String   // 'subscription' | 'event' | 'product'
+  kind                  String
   amountCents           Int      @map("amount_cents")
   currency              String   @default("eur")
   stripePaymentIntentId String?  @map("stripe_payment_intent_id")
@@ -247,20 +205,15 @@ model Payment {
 
 // Content
 model Testimonial {
-  id         String            @id @default(uuid())
-  authorName String            @map("author_name")
+  id         String   @id @default(uuid())
+  authorName String   @map("author_name")
   content    String
-  isFeatured Boolean           @default(false) @map("is_featured")
-  status     TestimonialStatus @default(DRAFT)
-  createdAt  DateTime          @default(now()) @map("created_at")
-  updatedAt  DateTime          @updatedAt @map("updated_at")
+  isFeatured Boolean  @default(false) @map("is_featured")
+  status     String   @default("DRAFT")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("testimonials")
-}
-
-enum TestimonialStatus {
-  DRAFT
-  PUBLISHED
 }
 
 model TeamMember {

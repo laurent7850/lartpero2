@@ -16,44 +16,50 @@ export function NotreHistoire() {
 
         <div className="space-y-8 text-lg leading-relaxed text-black/80">
           <p>
-            Derrière L'ArtPéro, il y a moi, Nia, une amoureuse des gens, de la créativité… et des apéros qui rassemblent 🍸
+            Derrière l'ArtPéro, il y a moi, Nia.
           </p>
 
           <p>
-            Depuis plus de dix ans, j'organise des événements pour créer du lien, faire vibrer, inspirer.
-            <br />
-            Mais j'avais envie d'aller plus loin.
+            Une amoureuse des gens, de la créativité et des apéros qui rassemblent.
           </p>
 
           <p>
-            Envie de moments vrais, où l'on se rencontre autrement autour d'un verre, d'une œuvre, d'une idée, d'une émotion.
+            Depuis plus de dix ans, j'imagine et j'organise des événements pour créer du lien, faire vibrer, inspirer. J'ai vu des amitiés naître, des projets éclore, des regards se croiser. Mais je sentais qu'il manquait quelque chose.
           </p>
 
           <p>
-            C'est comme ça qu'est né l'ArtPéro, un concept de soirées où l'art devient un prétexte à la rencontre.
-            <br />
-            Peinture, musique, gastronomie, danse, mode, écriture…
-            <br />
-            Chaque thème ouvre une nouvelle porte vers la découverte des autres, et un peu de soi aussi.
+            Aujourd'hui, les rencontres se font derrière un écran. On swipe, on scrolle, on juge en quelques secondes… mais on se rencontre peu. Alors j'ai voulu changer les règles du jeu, révolutionner la rencontre.
           </p>
 
           <p>
-            L'ArtPéro, c'est plus qu'un apéro.
-            <br />
-            C'est une expérience humaine et artistique, un lieu où l'on vient curieux, et d'où l'on repart inspiré.
+            L'ArtPéro est né de cette envie, créer des moments vrais où l'on échange des regards plutôt que des messages, où l'alchimie se ressent, au lieu de se deviner à travers un profil.
           </p>
 
           <div className="h-px bg-black/10 my-12" />
 
-          <p className="text-center font-medium">
-            Et ce n'est que le début…
+          <p className="text-center font-medium text-xl">
+            Remettre du regard dans la rencontre.
+          </p>
+          <p className="text-center font-medium text-xl">
+            Du ressenti dans l'échange.
+          </p>
+          <p className="text-center font-medium text-xl">
+            De la spontanéité dans l'instant.
           </p>
 
-          <div className="bg-gray-200 border border-gray-300 rounded-lg p-6 shadow-sm">
-            <p className="text-center italic text-gray-700">
-              Bientôt, l'aventure prendra la forme d'un club de rencontres artistiques, pour celles et ceux qui aiment la beauté, les échanges sincères et les vibes positives
-            </p>
-          </div>
+          <div className="h-px bg-black/10 my-12" />
+
+          <p>
+            Créer un cadre élégant et vivant où l'on se découvre naturellement, sans pression, sans écran entre nous. Ici, pas de profils à optimiser seulement des présences à explorer.
+          </p>
+
+          <p>
+            Parce que quand on partage une émotion autour d'un verre, d'une œuvre, d'une idée, d'une sensation… les barrières tombent naturellement, la conversation devient fluide, la connexion devient sincère.
+          </p>
+
+          <p>
+            Peinture, musique, gastronomie, danse, … Ici, on ne "match" pas, on se découvre. Finalement, chaque thème ouvre une nouvelle porte, chaque soirée est une énergie, chaque rencontre est une surprise et peut-être que votre plus belle histoire commence simplement par un ArtPéro !
+          </p>
         </div>
       </div>
     </div>

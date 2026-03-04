@@ -6,7 +6,7 @@ export function Footer() {
   return (
     <footer className="border-t border-black/10 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           <div>
             <h3 className="text-lg font-light mb-4">L'ArtPéro</h3>
             <p className="text-sm text-black/60">
@@ -17,18 +17,23 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-medium mb-4">À propos</h4>
+            <h4 className="text-sm font-medium mb-4">Nous suivre</h4>
             <ul className="space-y-2 text-sm text-black/60">
               <li>
-                <Link to="/notre-histoire" className="hover:text-black transition-colors">
-                  Notre Histoire
-                </Link>
+                <a
+                  href="https://www.instagram.com/lartpero/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-black transition-colors"
+                >
+                  Instagram
+                </a>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-sm font-medium mb-4">Services</h4>
+            <h4 className="text-sm font-medium mb-4">Nos services</h4>
             <ul className="space-y-2 text-sm text-black/60">
               <li>
                 <Link to="/coaching" className="hover:text-black transition-colors">
@@ -42,9 +47,20 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/devenir-membre" className="hover:text-black transition-colors">
-                  Devenir membre
+                  Types d'abonnements
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium mb-4">Nos partenaires</h4>
+            <ul className="space-y-2 text-sm text-black/60">
+              <li>Sportif</li>
+              <li>Bien-être</li>
+              <li>Beauté</li>
+              <li>Restauration</li>
+              <li>Loisirs</li>
             </ul>
           </div>
 
@@ -66,9 +82,15 @@ export function Footer() {
                   Conditions générales
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium mb-4">Contact</h4>
+            <ul className="space-y-2 text-sm text-black/60">
               <li>
                 <Link to="/contact" className="hover:text-black transition-colors">
-                  Contact
+                  Nous contacter
                 </Link>
               </li>
             </ul>

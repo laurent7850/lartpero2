@@ -77,7 +77,7 @@ export function Header() {
                   size="sm"
                   onClick={() => navigate('/connexion')}
                 >
-                  Connexion
+                  Log In
                 </Button>
                 <Button size="sm" onClick={() => navigate('/devenir-membre')}>
                   Devenir membre
@@ -159,7 +159,7 @@ export function Header() {
                       setMobileMenuOpen(false);
                     }}
                   >
-                    Connexion
+                    Log In
                   </Button>
                   <Button
                     size="sm"

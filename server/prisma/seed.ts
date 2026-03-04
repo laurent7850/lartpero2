@@ -33,7 +33,7 @@ async function main() {
       priceCents: 8500,
       durationMonths: 1,
       eventsIncluded: 2,
-      metadata: { features: ['2 events/mois', '1 verre offert', 'accès animations'] },
+      metadata: ({ features: ['2 events/mois', '1 verre offert', 'accès animations'] }),
     },
     {
       name: 'Premium',
@@ -43,7 +43,7 @@ async function main() {
       priceCents: 24000,
       durationMonths: 3,
       eventsIncluded: 6,
-      metadata: { features: ['2 events/mois', '1 verre offert', '1 guest/trimestre', 'animations'] },
+      metadata: ({ features: ['2 events/mois', '1 verre offert', '1 guest/trimestre', 'animations'] }),
     },
     {
       name: 'Elite',
@@ -53,7 +53,7 @@ async function main() {
       priceCents: 45600,
       durationMonths: 6,
       eventsIncluded: 12,
-      metadata: { features: ['2 events/mois', '1 verre offert', '1 guest/trimestre', 'animations'] },
+      metadata: ({ features: ['2 events/mois', '1 verre offert', '1 guest/trimestre', 'animations'] }),
     },
     {
       name: 'Prestige',
@@ -63,7 +63,7 @@ async function main() {
       priceCents: 88800,
       durationMonths: 12,
       eventsIncluded: 24,
-      metadata: { features: ['2 events/mois', '1 verre offert', '1 guest/trimestre', 'animations'] },
+      metadata: ({ features: ['2 events/mois', '1 verre offert', '1 guest/trimestre', 'animations'] }),
     },
     // Entries
     {
@@ -73,7 +73,7 @@ async function main() {
       category: 'ENTRY' as const,
       priceCents: 4900,
       eventsIncluded: 1,
-      metadata: { features: ['1 event', '1 verre offert', 'accès animation'] },
+      metadata: ({ features: ['1 event', '1 verre offert', 'accès animation'] }),
     },
     {
       name: 'Entrée Guest',
@@ -82,7 +82,7 @@ async function main() {
       category: 'ENTRY' as const,
       priceCents: 3900,
       eventsIncluded: 1,
-      metadata: { features: ['Invité d\'un membre', '1 verre offert', 'accès animation'], requires_member_sponsor: true },
+      metadata: ({ features: ['Invité d\'un membre', '1 verre offert', 'accès animation'], requires_member_sponsor: true }),
     },
     // Gift Cards
     {
@@ -92,7 +92,7 @@ async function main() {
       category: 'GIFT_CARD' as const,
       priceCents: 5500,
       eventsIncluded: 1,
-      metadata: { validity_months: 6, features: ['1 event', '1 verre offert', 'animation'] },
+      metadata: ({ validity_months: 6, features: ['1 event', '1 verre offert', 'animation'] }),
     },
     {
       name: 'Art\'Péro Expérience',
@@ -101,7 +101,7 @@ async function main() {
       category: 'GIFT_CARD' as const,
       priceCents: 9500,
       eventsIncluded: 2,
-      metadata: { validity_months: 6, features: ['2 events', '1 verre offert', 'animation'] },
+      metadata: ({ validity_months: 6, features: ['2 events', '1 verre offert', 'animation'] }),
     },
   ];
 

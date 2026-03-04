@@ -1,311 +1,458 @@
-# L'Artpéro
+# L'ArtPéro - Plateforme de Networking Artistique
 
-Une plateforme élégante de mise en relation autour d'apéros dans le milieu de l'art.
+Une application web complète pour la gestion d'événements de networking artistique, avec système de billetterie, abonnements et boutique en ligne.
 
-## Vue d'ensemble
+## URLs de Production
 
-L'Artpéro est une application web complète permettant de gérer un club privé (Le Club des Gentlemen), des événements exclusifs, et un accompagnement personnalisé pour les membres. Le site présente l'agence, ses valeurs, et propose un système d'inscription avec gestion des abonnements via Stripe.
+| Service | URL |
+|---------|-----|
+| **Site web** | https://lartpero.ainspiration.eu |
+| **API** | https://api-lartpero.ainspiration.eu |
 
-## Stack technique
-
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS (thème noir & blanc minimaliste)
-- **UI Components**: shadcn/ui
-- **Routing**: React Router v6
-- **Forms**: react-hook-form + zod
-- **Auth & Database**: Supabase (PostgreSQL + RLS)
-- **Icons**: lucide-react
-- **Dates**: date-fns
-
-## Architecture du projet
+## Architecture
 
 ```
-src/
-├── components/           # Composants réutilisables
-│   ├── ui/              # Composants shadcn/ui
-│   ├── Header.tsx       # En-tête avec navigation
-│   ├── Footer.tsx       # Pied de page
-│   ├── Layout.tsx       # Layout principal
-│   ├── ProtectedRoute.tsx  # HOC pour routes protégées
-│   └── CookieBanner.tsx # Bannière RGPD
-├── contexts/            # Contextes React
-│   └── AuthContext.tsx  # Gestion de l'authentification
-├── lib/                 # Utilitaires
-│   ├── supabase.ts     # Client Supabase + types
-│   └── utils.ts        # Fonctions utilitaires
-├── pages/              # Pages de l'application
-│   ├── Home.tsx        # Page d'accueil
-│   ├── [pages publiques...]
-│   ├── members/        # Espace membres protégé
-│   │   ├── MembresLayout.tsx
-│   │   ├── Profil.tsx
-│   │   ├── MesEvenements.tsx
-│   │   └── Abonnement.tsx
-│   └── admin/          # Panel admin (require rôle admin)
-│       ├── AdminLayout.tsx
-│       └── AdminEvenements.tsx
-└── App.tsx             # Configuration des routes
-
+lartpero2/
+├── src/                    # Frontend React (Vite + TypeScript)
+│   ├── components/         # Composants UI réutilisables
+│   │   ├── ui/            # Composants shadcn/ui
+│   │   ├── Header.tsx     # Navigation principale
+│   │   ├── Footer.tsx     # Pied de page
+│   │   └── ProtectedRoute.tsx  # Protection des routes
+│   ├── contexts/           # Contextes React
+│   │   └── AuthContext.tsx # Gestion de l'authentification
+│   ├── lib/                # Utilitaires
+│   │   ├── api.ts         # Client API
+│   │   └── utils.ts       # Fonctions utilitaires
+│   └── pages/              # Pages de l'application
+│       ├── admin/          # Dashboard administrateur
+│       └── members/        # Espace membre
+├── server/                 # Backend Express.js
+│   ├── src/
+│   │   ├── routes/         # Routes API
+│   │   │   ├── auth.ts    # Authentification
+│   │   │   ├── events.ts  # Événements
+│   │   │   ├── products.ts # Produits
+│   │   │   ├── orders.ts  # Commandes
+│   │   │   ├── members.ts # Espace membre
+│   │   │   ├── admin.ts   # Administration
+│   │   │   ├── messages.ts # Contact
+│   │   │   └── webhook.ts # Webhooks Stripe
+│   │   ├── middleware/
+│   │   │   └── auth.ts    # Middleware JWT
+│   │   └── index.ts       # Point d'entrée serveur
+│   └── prisma/
+│       └── schema.prisma  # Schéma base de données
+├── docker-compose.yml      # Configuration Docker production
+└── Dockerfile.*           # Dockerfiles frontend/backend
 ```
 
-## Structure de la base de données
+## Stack Technique
 
-### Tables principales
+### Frontend
+| Technologie | Version | Usage |
+|-------------|---------|-------|
+| React | 18.3 | Framework UI |
+| TypeScript | 5.5 | Typage statique |
+| Vite | 5.4 | Build tool |
+| Tailwind CSS | 3.4 | Styling |
+| Radix UI | - | Composants accessibles |
+| React Router | 7.9 | Navigation |
+| React Hook Form | 7.53 | Formulaires |
+| Zod | 3.23 | Validation |
+| Recharts | 2.12 | Graphiques |
+| Lucide React | 0.446 | Icônes |
 
-- **profiles**: Informations utilisateur étendues
-- **memberships**: Abonnements et statuts Stripe
-- **events**: Événements (publics ou membres uniquement)
-- **event_registrations**: Inscriptions aux événements
-- **payments**: Historique des paiements
-- **testimonials**: Témoignages clients
-- **team**: Membres de l'équipe
-- **messages**: Messages du formulaire de contact
+### Backend
+| Technologie | Version | Usage |
+|-------------|---------|-------|
+| Node.js | 18+ | Runtime |
+| Express.js | 4.21 | Framework HTTP |
+| TypeScript | 5.6 | Typage statique |
+| Prisma | 5.22 | ORM |
+| PostgreSQL | 15+ | Base de données |
+| JWT | 9.0 | Authentification |
+| bcryptjs | 2.4 | Hashage |
+| Stripe | 17.3 | Paiements |
 
-Toutes les tables ont RLS (Row Level Security) activé avec des policies strictes.
+### Déploiement
+| Technologie | Usage |
+|-------------|-------|
+| Docker | Conteneurisation |
+| Docker Compose | Orchestration |
+| Traefik | Reverse proxy + SSL |
+| Let's Encrypt | Certificats SSL |
+| Hostinger VPS | Hébergement |
 
-## Installation et configuration locale
+## Installation Locale
 
 ### Prérequis
-
 - Node.js 18+
-- npm ou yarn
-- Un compte Supabase (gratuit)
-- Un compte Stripe (optionnel pour les paiements)
+- PostgreSQL 15+ (ou Docker)
+- Compte Stripe (pour les paiements)
 
 ### 1. Cloner et installer
 
 ```bash
+git clone <repo-url>
+cd lartpero2
+
+# Frontend
+npm install
+
+# Backend
+cd server
 npm install
 ```
 
-### 2. Configuration Supabase
+### 2. Configuration
 
-Les variables d'environnement Supabase sont déjà configurées dans `.env`:
-
+**`server/.env`**
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/lartpero"
+JWT_SECRET="votre-secret-jwt-securise-minimum-32-caracteres"
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+FRONTEND_URL="http://localhost:5173"
+ALLOWED_ORIGINS="http://localhost:5173"
+PORT=3001
 ```
-VITE_SUPABASE_URL=https://xsxtvdubvbbsvltslara.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+**`.env`** (racine du projet)
+```env
+VITE_API_URL="http://localhost:3001/api"
 ```
 
-La base de données et le schéma sont déjà créés et configurés avec:
-- Toutes les tables (profiles, memberships, events, etc.)
-- Row Level Security (RLS) activé sur toutes les tables
-- Policies de sécurité configurées
-- Triggers pour auto-création des profils
-
-### 3. Créer un compte admin
-
-Pour accéder au panel admin, vous devez créer un compte et modifier manuellement le rôle dans la base:
-
-1. Inscrivez-vous via `/devenir-membre`
-2. Dans Supabase Dashboard, allez dans Table Editor > profiles
-3. Trouvez votre profil et changez `role` de `member` à `admin`
-
-### 4. Lancer le serveur de développement
+### 3. Base de données
 
 ```bash
+cd server
+
+# Générer le client Prisma
+npm run db:generate
+
+# Créer les tables
+npm run db:push
+
+# (Optionnel) Données de test
+npm run db:seed
+```
+
+### 4. Lancer le projet
+
+```bash
+# Terminal 1 - Backend
+cd server
+npm run dev
+
+# Terminal 2 - Frontend
 npm run dev
 ```
 
-L'application sera disponible sur `http://localhost:5173`
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:3001 |
 
-## Scripts disponibles
+## Structure de la Base de Données
+
+### Modèles principaux
+
+```prisma
+// Utilisateurs
+User          # Comptes utilisateurs (email, password, role)
+Session       # Sessions JWT actives
+Membership    # Abonnements Stripe
+
+// Événements
+Event              # Événements
+EventRegistration  # Inscriptions (commandes)
+Ticket             # Billets générés après paiement
+
+// Produits
+Product       # Abonnements, cartes cadeaux
+ProductOrder  # Commandes de produits
+
+// Paiements
+Payment       # Historique des transactions
+
+// Contenu
+Message       # Messages de contact
+Testimonial   # Témoignages
+TeamMember    # Équipe
+```
+
+### Énumérations
+
+| Enum | Valeurs |
+|------|---------|
+| `Role` | `MEMBER`, `ADMIN` |
+| `MembershipStatus` | `NONE`, `ACTIVE`, `CANCELED`, `PAST_DUE` |
+| `EventStatus` | `DRAFT`, `PUBLISHED` |
+| `RegistrationStatus` | `PENDING`, `PAID`, `CANCELED` |
+| `PaymentStatus` | `PENDING`, `PAID`, `FAILED`, `REFUNDED` |
+| `ProductCategory` | `SUBSCRIPTION`, `ENTRY`, `GIFT_CARD` |
+
+## API Endpoints
+
+### Authentification (`/api/auth`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `POST` | `/register` | Inscription | - |
+| `POST` | `/login` | Connexion | - |
+| `GET` | `/me` | Profil utilisateur | ✓ |
+| `PUT` | `/profile` | Modifier profil | ✓ |
+
+### Événements (`/api/events`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `GET` | `/` | Liste des événements publiés | - |
+| `GET` | `/:slug` | Détails d'un événement | - |
+| `POST` | `/:id/register` | S'inscrire à un événement | ✓ |
+
+### Produits (`/api/products`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `GET` | `/` | Liste des produits | - |
+| `GET` | `/:slug` | Détails d'un produit | - |
+| `POST` | `/checkout` | Créer une session Stripe | ✓ |
+| `POST` | `/verify-payment` | Vérifier le paiement | ✓ |
+| `GET` | `/orders` | Historique des commandes | ✓ |
+
+### Commandes (`/api/orders`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `GET` | `/:orderId` | Détails d'une commande | ✓ |
+| `POST` | `/:orderId/checkout` | Session Stripe événement | ✓ |
+| `POST` | `/:orderId/verify` | Vérifier le paiement | ✓ |
+
+### Membres (`/api/members`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `GET` | `/membership` | Statut de l'abonnement | ✓ |
+| `GET` | `/tickets` | Mes billets | ✓ |
+| `GET` | `/registrations` | Mes inscriptions | ✓ |
+| `GET` | `/payments` | Historique paiements | ✓ |
+| `POST` | `/redeem-gift` | Utiliser un code cadeau | ✓ |
+
+### Messages (`/api/messages`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `POST` | `/` | Envoyer un message | - |
+| `GET` | `/testimonials` | Témoignages publics | - |
+| `GET` | `/team` | Équipe publique | - |
+
+### Admin (`/api/admin`)
+
+| Méthode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| `GET` | `/dashboard` | Statistiques | Admin |
+| `GET` | `/members` | Liste des membres | Admin |
+| `GET` | `/events` | Tous les événements | Admin |
+| `POST` | `/events` | Créer un événement | Admin |
+| `PUT` | `/events/:id` | Modifier un événement | Admin |
+| `DELETE` | `/events/:id` | Supprimer un événement | Admin |
+| `GET` | `/products` | Tous les produits | Admin |
+| `POST` | `/products` | Créer un produit | Admin |
+| `PUT` | `/products/:id` | Modifier un produit | Admin |
+| `DELETE` | `/products/:id` | Supprimer un produit | Admin |
+| `GET` | `/payments` | Historique paiements | Admin |
+| `GET` | `/messages` | Messages reçus | Admin |
+
+### Webhook (`/api/webhook`)
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| `POST` | `/stripe` | Webhook Stripe |
+
+## Pages de l'Application
+
+### Pages Publiques
+| Route | Page |
+|-------|------|
+| `/` | Accueil |
+| `/notre-histoire` | À propos |
+| `/evenements` | Liste des événements |
+| `/evenements/:slug` | Détail événement |
+| `/boutique` | Produits et abonnements |
+| `/contact` | Formulaire de contact |
+| `/connexion` | Connexion/Inscription |
+| `/devenir-membre` | Page d'inscription |
+| `/mentions-legales` | Mentions légales |
+| `/conditions-generales` | CGU |
+| `/confidentialite` | Politique de confidentialité |
+
+### Espace Membre (protégé)
+| Route | Page |
+|-------|------|
+| `/membres/profil` | Mon profil |
+| `/membres/mes-evenements` | Mes inscriptions |
+| `/membres/mes-billets` | Mes billets (QR codes) |
+| `/membres/abonnement` | Gérer mon abonnement |
+
+### Administration (admin requis)
+| Route | Page |
+|-------|------|
+| `/admin` | Dashboard |
+| `/admin/membres` | Gestion des membres |
+| `/admin/evenements` | Gestion des événements |
+| `/admin/paiements` | Historique des paiements |
+
+### Pages de Paiement
+| Route | Page |
+|-------|------|
+| `/reserver/:slug` | Réserver un événement |
+| `/paiement/:orderId` | Finaliser paiement événement |
+| `/paiement-produit/:orderId` | Paiement produit |
+
+## Configuration Stripe
+
+### Webhooks à configurer
+
+**URL** : `https://api-lartpero.ainspiration.eu/api/webhook/stripe`
+
+**Événements à écouter** :
+- `checkout.session.completed`
+- `payment_intent.succeeded`
+- `invoice.paid`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+
+### Produits recommandés
+
+Créer dans Stripe Dashboard :
+1. **Abonnement mensuel** - Prix récurrent
+2. **Abonnement annuel** - Prix récurrent
+3. **Cartes cadeaux** - Prix unique (plusieurs montants)
+
+## Déploiement Docker
+
+### docker-compose.yml
+
+```yaml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: lartpero
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: lartpero
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://lartpero:${DB_PASSWORD}@postgres:5432/lartpero
+      JWT_SECRET: ${JWT_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      FRONTEND_URL: https://lartpero.ainspiration.eu
+      ALLOWED_ORIGINS: https://lartpero.ainspiration.eu
+    labels:
+      - "traefik.http.routers.lartpero-api.rule=Host(`api-lartpero.ainspiration.eu`)"
+      - "traefik.http.routers.lartpero-api.tls.certresolver=letsencrypt"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      VITE_API_URL: https://api-lartpero.ainspiration.eu/api
+    labels:
+      - "traefik.http.routers.lartpero.rule=Host(`lartpero.ainspiration.eu`)"
+      - "traefik.http.routers.lartpero.tls.certresolver=letsencrypt"
+
+volumes:
+  postgres_data:
+```
+
+### Commandes
 
 ```bash
-npm run dev          # Lancer le serveur de développement
-npm run build        # Build de production
-npm run preview      # Prévisualiser le build
-npm run lint         # Linter le code
-npm run typecheck    # Vérifier les types TypeScript
+# Construire et démarrer
+docker-compose up -d --build
+
+# Voir les logs
+docker-compose logs -f
+
+# Logs d'un service spécifique
+docker-compose logs -f backend
+
+# Arrêter
+docker-compose down
+
+# Arrêter et supprimer les volumes
+docker-compose down -v
 ```
 
-## Fonctionnalités principales
+## Scripts NPM
 
-### Pour les visiteurs
-
-- ✅ Navigation sur toutes les pages publiques (histoire, valeurs, philosophie, etc.)
-- ✅ Consultation des événements publiés
-- ✅ Formulaire de contact (stockage en DB)
-- ✅ Inscription avec email/password
-- ✅ Pages légales (mentions, CGU, confidentialité)
-- ✅ Bannière de consentement cookies
-
-### Pour les membres
-
-- ✅ Authentification sécurisée (Supabase Auth)
-- ✅ Espace personnel avec profil éditable
-- ✅ Consultation de ses inscriptions aux événements
-- ✅ Gestion de l'abonnement (interface prête pour Stripe)
-- ✅ Accès aux événements "membres uniquement"
-
-### Pour les administrateurs
-
-- ✅ Panel admin avec gestion des événements
-- ✅ Consultation de tous les événements
-- ✅ Sections prévues pour: témoignages, membres, messages
-
-## Intégration Stripe (À venir)
-
-Le projet est préparé pour l'intégration Stripe:
-
-1. **Variables d'environnement à ajouter**:
-```
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_MEMBERSHIP_ID=price_...
-```
-
-2. **Flux de paiement**:
-   - Checkout Sessions pour les abonnements
-   - Checkout Sessions pour les billets d'événements
-   - Customer Portal pour la gestion d'abonnement
-
-3. **Webhook handler**:
-   - À implémenter via Supabase Edge Function
-   - Écoute: `checkout.session.completed`, `customer.subscription.updated`, etc.
-   - Mise à jour automatique de la table `memberships`
-
-## Déploiement
-
-### Option 1: Netlify (Recommandé)
-
+### Frontend (`/`)
 ```bash
-# Build command
-npm run build
-
-# Publish directory
-dist
-
-# Environment variables
-VITE_SUPABASE_URL=https://...
-VITE_SUPABASE_ANON_KEY=eyJ...
+npm run dev        # Développement avec hot reload
+npm run build      # Build production
+npm run preview    # Aperçu du build
+npm run lint       # Linter ESLint
+npm run typecheck  # Vérification TypeScript
 ```
 
-### Option 2: Vercel
-
-Même configuration que Netlify, compatible avec Vite par défaut.
+### Backend (`/server`)
+```bash
+npm run dev        # Développement avec hot reload (tsx)
+npm run build      # Compilation TypeScript
+npm run start      # Production (dist/index.js)
+npm run db:push    # Synchroniser schéma → DB
+npm run db:generate # Générer client Prisma
+npm run db:seed    # Insérer données de test
+```
 
 ## Sécurité
 
-- ✅ RLS activé sur toutes les tables
-- ✅ Policies restrictives (ownership + admin checks)
-- ✅ Protection des routes sensibles (membres, admin)
-- ✅ Validation des formulaires avec zod
-- ✅ Pas de secrets côté client
-- ✅ CORS configuré pour les edge functions
+| Mesure | Implémentation |
+|--------|----------------|
+| Mots de passe | bcryptjs (10 rounds) |
+| Authentification | JWT (expire 7j) |
+| CORS | Origines autorisées uniquement |
+| Webhooks Stripe | Vérification par signature |
+| Routes admin | Middleware `requireAdmin` |
+| Validation | Zod côté frontend + backend |
 
-## Accessibilité
+## Créer un Administrateur
 
-- Contrastes WCAG AA respectés (noir/blanc)
-- Focus visible sur tous les éléments interactifs
-- Labels ARIA sur les éléments clés
-- Navigation au clavier fonctionnelle
+1. Créer un compte via `/devenir-membre`
+2. Se connecter à PostgreSQL :
+```sql
+UPDATE users SET role = 'ADMIN' WHERE email = 'votre@email.com';
+```
+3. Se reconnecter pour voir le bouton "Admin" dans le header
 
 ## Design
 
-### Palette de couleurs
-- Noir: `#000000` (texte, arrière-plans)
-- Blanc: `#FFFFFF` (arrière-plans, texte sur fond noir)
-- Gris: variations de `rgba(0, 0, 0, opacity)` pour les textes secondaires
+### Palette
+- **Noir** : `#000000` - Texte principal, backgrounds
+- **Blanc** : `#FFFFFF` - Backgrounds, texte sur noir
+- **Gris** : `rgba(0,0,0,0.6)` - Texte secondaire
 
 ### Typographie
-- Police: Inter (sans-serif élégante)
-- Titres: font-light (300)
-- Corps: font-normal (400)
-- Accents: font-medium (500)
-
-### Composants UI
-Tous les composants shadcn/ui sont disponibles dans `src/components/ui/`.
-
-## Routes de l'application
-
-### Pages publiques
-- `/` - Accueil
-- `/notre-histoire` - Histoire de l'agence
-- `/nos-valeurs` - Valeurs
-- `/notre-philosophie` - Philosophie
-- `/notre-promesse` - Promesse
-- `/experience` - L'expérience proposée
-- `/art-de-la-rencontre` - L'art de la rencontre
-- `/club-des-gentlemen` - Présentation du Club
-- `/certification-gentleman` - La certification
-- `/coaching` - Coaching personnalisé
-- `/temoignages` - Témoignages clients
-- `/confidentialite` - Politique de confidentialité
-- `/equipe` - L'équipe
-- `/contact` - Formulaire de contact
-- `/evenements` - Liste des événements
-- `/evenements/:slug` - Détail d'un événement
-- `/devenir-membre` - Inscription
-- `/connexion` - Connexion
-- `/mentions-legales` - Mentions légales
-- `/conditions-generales` - CGU
-
-### Routes protégées (membres)
-- `/membres/profil` - Profil utilisateur
-- `/membres/mes-evenements` - Inscriptions aux événements
-- `/membres/abonnement` - Gestion abonnement
-
-### Routes admin (require role=admin)
-- `/admin/evenements` - Gestion des événements
-- `/admin/temoignages` - Gestion des témoignages (à venir)
-- `/admin/membres` - Gestion des membres (à venir)
-- `/admin/messages` - Consultation des messages (à venir)
-
-## Données de test
-
-Pour tester l'application, vous pouvez ajouter des données via Supabase Dashboard:
-
-### Exemple d'événement
-
-```sql
-INSERT INTO events (title, slug, description, location, date_start, capacity, is_members_only, price_cents, status, image_url)
-VALUES (
-  'Vernissage d''art contemporain',
-  'vernissage-art-contemporain',
-  'Une soirée exclusive dans une galerie parisienne',
-  'Galerie Perrotin, Paris',
-  '2025-12-15 19:00:00+00',
-  50,
-  false,
-  2500,
-  'published',
-  'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg'
-);
-```
-
-### Exemple de témoignage
-
-```sql
-INSERT INTO testimonials (author_name, content, is_featured, status)
-VALUES (
-  'Sophie M.',
-  'Grâce à L''Artpéro, j''ai rencontré des personnes passionnées d''art et trouvé un compagnon qui partage mes valeurs. L''accompagnement est d''une rare qualité.',
-  true,
-  'published'
-);
-```
-
-### Exemple de membre d'équipe
-
-```sql
-INSERT INTO team (name, role, bio_md, visible, order_index)
-VALUES (
-  'Élise Beaumont',
-  'Fondatrice & Directrice',
-  'Passionnée d''art et de psychologie, Élise a créé L''Artpéro pour redonner sens à la rencontre amoureuse.',
-  true,
-  1
-);
-```
-
-## Support et contact
-
-Pour toute question technique sur l'implémentation, consultez:
-- Documentation Supabase: https://supabase.com/docs
-- Documentation React Router: https://reactrouter.com
-- Documentation shadcn/ui: https://ui.shadcn.com
+- Police : **Inter** (sans-serif)
+- Titres : `font-light` (300)
+- Corps : `font-normal` (400)
+- Accents : `font-medium` (500)
 
 ## Licence
 
-Propriété de L'Artpéro. Tous droits réservés.
+Projet privé - Tous droits réservés.
+
+---
+
+**Documentation générée le** : Février 2026
