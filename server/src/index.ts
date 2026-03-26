@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth.js';
 import eventsRoutes from './routes/events.js';
@@ -15,8 +16,31 @@ export const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { error: 'Trop de requêtes, réessayez plus tard.' },
+});
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Trop de tentatives, réessayez plus tard.' },
+});
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: 'Trop de messages envoyés, réessayez plus tard.' },
+});
+app.use('/api/', generalLimiter);
+app.use('/api/auth', authLimiter);
+app.use('/api/messages', messageLimiter);
+
 // CORS
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL || 'https://lartpero.ainspiration.eu',
+];
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
@@ -55,6 +79,12 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 L'ArtPéro API running on port ${PORT}`);
+  const productCount = await prisma.product.count();
+  console.log(`📦 Products in DB: ${productCount}`);
+  if (productCount > 0) {
+    const products = await prisma.product.findMany({ select: { slug: true, isActive: true } });
+    console.log('📦 Products:', JSON.stringify(products));
+  }
 });
