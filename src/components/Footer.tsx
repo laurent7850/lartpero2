@@ -17,8 +17,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-medium mb-4">Nous suivre</h4>
+            <h4 className="text-sm font-medium mb-4">À propos</h4>
             <ul className="space-y-2 text-sm text-black/60">
+              <li>
+                <Link to="/notre-histoire" className="hover:text-black transition-colors">
+                  Notre Histoire
+                </Link>
+              </li>
               <li>
                 <a
                   href="https://www.instagram.com/lartpero/"
@@ -33,7 +38,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-medium mb-4">Nos services</h4>
+            <h4 className="text-sm font-medium mb-4">Services</h4>
             <ul className="space-y-2 text-sm text-black/60">
               <li>
                 <Link to="/coaching" className="hover:text-black transition-colors">
@@ -47,7 +52,7 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/devenir-membre" className="hover:text-black transition-colors">
-                  Types d'abonnements
+                  Devenir membre
                 </Link>
               </li>
             </ul>
@@ -82,15 +87,9 @@ export function Footer() {
                   Conditions générales
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-medium mb-4">Contact</h4>
-            <ul className="space-y-2 text-sm text-black/60">
               <li>
                 <Link to="/contact" className="hover:text-black transition-colors">
-                  Nous contacter
+                  Contact
                 </Link>
               </li>
             </ul>
