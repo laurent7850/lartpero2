@@ -178,7 +178,7 @@ export function Home() {
               <h3 className="font-semibold text-gray-900 mb-2">4. Le meilleur rapport qualité/prix</h3>
               <p className="text-sm text-gray-700">
                 85€/mois → 42,50€/soirée avec tous les avantages inclus.<br />
-                Non-membres : 49€/soirée, sans verre d'accueil ni accès privilégié.
+                Non-membres : 25€/soirée, sans verre d'accueil ni accès privilégié.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-gray-50 border border-gray-200">

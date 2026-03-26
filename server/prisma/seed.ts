@@ -69,11 +69,11 @@ async function main() {
     {
       name: 'Entrée Découverte',
       slug: 'entree-decouverte',
-      description: '1 event, 1 verre offert, accès animation',
+      description: '1 event, accès à la soirée sans abonnement',
       category: 'ENTRY' as const,
-      priceCents: 4900,
+      priceCents: 2500,
       eventsIncluded: 1,
-      metadata: ({ features: ['1 event', '1 verre offert', 'accès animation'] }),
+      metadata: ({ features: ['1 event', 'accès soirée non-exclusive'] }),
     },
     {
       name: 'Entrée Guest',
