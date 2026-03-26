@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+// @ts-ignore - types may not resolve in all environments
 import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth.js';
@@ -79,12 +80,6 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`🚀 L'ArtPéro API running on port ${PORT}`);
-  const productCount = await prisma.product.count();
-  console.log(`📦 Products in DB: ${productCount}`);
-  if (productCount > 0) {
-    const products = await prisma.product.findMany({ select: { slug: true, isActive: true } });
-    console.log('📦 Products:', JSON.stringify(products));
-  }
 });

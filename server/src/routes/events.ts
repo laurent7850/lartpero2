@@ -1,6 +1,20 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, optionalAuth, requireAdmin } from '../middleware/auth.js';
+
+const eventSchema = z.object({
+  title: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200),
+  description: z.string().max(5000).optional(),
+  location: z.string().max(300).optional(),
+  dateStart: z.string().datetime(),
+  dateEnd: z.string().datetime().optional().nullable(),
+  capacity: z.number().int().min(0).optional(),
+  isMembersOnly: z.boolean().optional(),
+  priceCents: z.number().int().min(0).optional(),
+  imageUrl: z.string().url().max(500).optional().nullable(),
+});
 
 const router = Router();
 
@@ -65,26 +79,29 @@ router.get('/:slug', optionalAuth, async (req, res) => {
 // POST /api/events - Create event (admin only)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { title, slug, description, location, dateStart, dateEnd, capacity, isMembersOnly, priceCents, imageUrl } = req.body;
+    const data = eventSchema.parse(req.body);
 
     const event = await prisma.event.create({
       data: {
-        title,
-        slug,
-        description,
-        location,
-        dateStart: new Date(dateStart),
-        dateEnd: dateEnd ? new Date(dateEnd) : null,
-        capacity,
-        isMembersOnly: isMembersOnly || false,
-        priceCents: priceCents || 0,
-        imageUrl,
+        title: data.title,
+        slug: data.slug,
+        description: data.description,
+        location: data.location,
+        dateStart: new Date(data.dateStart),
+        dateEnd: data.dateEnd ? new Date(data.dateEnd) : null,
+        capacity: data.capacity,
+        isMembersOnly: data.isMembersOnly || false,
+        priceCents: data.priceCents || 0,
+        imageUrl: data.imageUrl,
         status: 'DRAFT',
       },
     });
 
     res.status(201).json(event);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+    }
     console.error('Create event error:', error);
     res.status(500).json({ error: 'Failed to create event' });
   }

@@ -12,8 +12,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 // GET /api/products - List active products
 router.get('/', async (_req, res) => {
   try {
-    const count = await prisma.product.count();
-    console.log('Total products in DB:', count);
     const products = await prisma.product.findMany({
       where: { isActive: true },
       orderBy: [
@@ -21,7 +19,6 @@ router.get('/', async (_req, res) => {
         { priceCents: 'asc' },
       ],
     });
-    console.log('Active products:', products.length);
 
     res.json(products);
   } catch (error) {
